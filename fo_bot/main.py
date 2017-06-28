@@ -2,6 +2,9 @@
 import logging
 from re import escape
 
+from telegram import (
+    ReplyKeyboardMarkup
+)
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -59,9 +62,18 @@ def start(bot, update):
 
     update.message.reply_text(
         f'Здравствуйте, {user_name}.\n'
-        'Чтобы завершить разговор, напишите "Завершить".')
+        'Чтобы завершить разговор, напишите "Завершить".'
+    )
 
-    return ask_for_contact(bot, update)
+    update.message.reply_text(
+        'Вы хотите авторизоваться в существующую учетную запись FindTheOwner.ru,'
+        'или зарегестрироваться?',
+        reply_markup=ReplyKeyboardMarkup([['Авторизоваться'],
+                                          ['Зарегистрироваться']],
+                                         one_time_keyboard=True)
+    )
+
+    return STARTED
 
 
 ### fallbacks ###
@@ -130,12 +142,12 @@ def main():
                     ]
         },
 
-        fallbacks=[CommandHandler('cancel',
-                                  cancel,
-                                  pass_user_data=True),
-                   RegexHandler('^(з|З)авершить$',
-                                cancel,
-                                pass_user_data=True),
+        fallbacks=[#CommandHandler('cancel',
+                   #               cancel,
+                   #               pass_user_data=True),
+                   #RegexHandler('^(з|З)авершить$',
+                   #             cancel,
+                   #             pass_user_data=True),
                    CommandHandler('help',
                                   show_help,
                                   pass_user_data=True),
