@@ -1,3 +1,10 @@
+from telegram import (
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
+from ..settings import *
+
+
 def ask_for_contact(bot, update):
     contact_button = KeyboardButton(text="Отправить мне контакт", request_contact=True)
     update.message.reply_text('Поделитесь своим контактом или введите свой номер телефона, '
@@ -9,7 +16,7 @@ def ask_for_contact(bot, update):
 
 
 def fetch_number_from_contact(bot, update, user_data):
-    phone = normalize_phone_number(update.message.contact.phone_number)
+    phone = update.message.contact.phone_numbe)
     logger.info(f'User {get_user_name(update)} send a contact with phone number {phone}')
 
     user_data['phone_number'] = phone
