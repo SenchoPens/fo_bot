@@ -8,7 +8,7 @@ logger = getLogger(__name__)
 
 
 class api_error_handler:
-    """Decorator around functions that make api requests, so """
+    """Decorator around functions that make api requests."""
 
     def __init__(self, bad):
         self.bad = bad

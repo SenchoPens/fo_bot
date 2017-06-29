@@ -16,7 +16,7 @@ def ask_for_contact(bot, update):
 
 
 def fetch_number_from_contact(bot, update, user_data):
-    phone = update.message.contact.phone_numbe)
+    phone = update.message.contact.phone_number
     logger.info(f'User {get_user_name(update)} send a contact with phone number {phone}')
 
     user_data['phone_number'] = phone

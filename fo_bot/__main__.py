@@ -18,7 +18,8 @@ from telegram.ext import (
 
 from fo_bot.bot_utils.freeze import *
 from fo_bot.settings import *
-from fo_bot.bot_utils.error_handler import
+from fo_bot.bot_utils.error_handler import api_error_handler
+from fo_bot.bot_utils.api import API
 from fo_bot.bot_states import (
     auth,
     register,
@@ -33,7 +34,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 logger.info('-' * 50)
 
-
+api = API()
 
 
 ################################### Helpers ######################################
@@ -44,7 +45,6 @@ def get_user_name(update) -> str:
 
 
 ### Additional handlers ###
-
 def check_login(bot, update, user_data):
     pass
 
@@ -92,15 +92,19 @@ def show_help(bot, update, user_data):
     if user_data['logged']:
         cabinet_help(bot, update)
 
+
 ## If user logged: ##
+@api_error_handler(None)
 def display_balance(bot, update, user_data):
     if user_data['logged']:
-        balance: int = get_balance(phone=user_data['phone_number']).balance
+        balance: int = api.balance(phone=user_data['phone_number']).balance
         update.message.reply_text(f'Ваш баланс: {balance} рублей.')
+
 
 ### error handlers ###
 def error(bot, update, error):
     logger.warning(f'Update "{update}" caused error "{error}"')
+
 
 ########################################################################################################################
 
