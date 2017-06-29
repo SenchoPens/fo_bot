@@ -17,7 +17,7 @@ from telegram.ext import (
 
 from fo_bot.freeze import *
 from fo_bot.settings import *
-from bot_states import *
+from .bot_states import *
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -106,17 +106,15 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            ASK_PHONE: [MessageHandler(Filters.contact,
-                                       fetch_number_from_contact,
-                                       pass_user_data=True),
-                        RegexHandler('^Ввести самому$',
-                                     input_phone_number)
-                        ],
             STARTED: [RegexHandler('^Авторизоваться$',
                                    auth.auth),
                       RegexHandler('^Зарегистрироваться$',
                                    register.register)
                       ],
+            ASK_PHONE: [MessageHandler(Filters.contact,
+                                       auth.fetch_number_from_contact,
+                                       pass_user_data=True)
+                        ],
             PHONE: [MessageHandler(Filters.text,
                                    read_phone_number,
                                    pass_user_data=True)
