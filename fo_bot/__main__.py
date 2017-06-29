@@ -18,7 +18,8 @@ from telegram.ext import (
 
 from fo_bot.bot_utils.freeze import *
 from fo_bot.settings import *
-from .bot_states import (
+from fo_bot.bot_utils.error_handler import
+from fo_bot.bot_states import (
     auth,
     register,
 )

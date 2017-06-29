@@ -1,6 +1,9 @@
 from functools import wraps
 from logging import getLogger
 
+from fo_bot.bot_utils.api import APIMethodException
+
+
 logger = getLogger(__name__)
 
 
@@ -15,8 +18,13 @@ class api_error_handler:
         def wrapped(bot, update, *args, **kwargs):
             try:
                 return func(bot, update, *args, **kwargs)
-            except EGRNError as e:
-                update.message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
-                logger.warning(f'Something bad with {update.effective_user.id}')
+            except APIMethodException as e:
+                if APIMethodException.code == 409:  #ToDo: replace with real attrs!!!
+                    err = APIMethodException.text
+                    update.message.reply_text(APIMethodException.text)
+                else:
+                    err = 'Something bad'
+                    update.message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
+                logger.warning(f'{err} with api request by {update.effective_user.id}')
                 return self.bad
         return wrapped
