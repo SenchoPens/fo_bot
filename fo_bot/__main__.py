@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import logging
+
 from re import escape
 
-from
 from telegram import (
     ReplyKeyboardMarkup
 )
@@ -16,6 +15,7 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
+from fo_bot import logger
 from fo_bot.bot_utils.freeze import *
 from fo_bot.settings import *
 from fo_bot.bot_utils.error_handler import api_error_handler
@@ -26,12 +26,6 @@ from fo_bot.bot_states import (
 )
 
 # Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO,
-                    #filename='bot_log'
-                    )
-
-logger = logging.getLogger(__name__)
 logger.info('-' * 50)
 
 api = API()
