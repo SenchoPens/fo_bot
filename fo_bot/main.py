@@ -17,7 +17,14 @@ from telegram.ext import (
 
 from fo_bot.freeze import *
 from fo_bot.settings import *
-from .bot_states import *
+from .bot_states import (
+    auth,
+    cabinet,
+    register,
+    fetch_phone,
+    started,
+    make_order,
+)
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
