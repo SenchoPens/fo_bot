@@ -15,8 +15,9 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
-from .freeze import *
-from .settings import *
+from fo_bot.freeze import *
+from fo_bot.settings import *
+from bot_states import *
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -111,6 +112,10 @@ def main():
                         RegexHandler('^Ввести самому$',
                                      input_phone_number)
                         ],
+            STARTED: [RegexHandler('^Авторизоваться$',
+                                   auth.auth),
+                      RegexHandler('^Зарегистрироваться$',
+                                   register.register)
             PHONE: [MessageHandler(Filters.text,
                                    read_phone_number,
                                    pass_user_data=True)
