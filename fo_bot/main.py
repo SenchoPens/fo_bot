@@ -116,6 +116,7 @@ def main():
                                    auth.auth),
                       RegexHandler('^Зарегистрироваться$',
                                    register.register)
+                      ],
             PHONE: [MessageHandler(Filters.text,
                                    read_phone_number,
                                    pass_user_data=True)
