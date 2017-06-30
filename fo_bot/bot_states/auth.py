@@ -4,9 +4,13 @@ from telegram import (
 )
 
 from fo_bot.settings import *
-from fo_bot import logger
+from fo_bot.bot_utils.error_handler import api_error_handler
+from fo_bot import logger, api
 
 
+@api_error_handler
+def auth(bot, update, user_data):
+    api.auth(phone=user_data['phone'], email=user_data['email'])
 
 
 def fetch_number_from_contact(bot, update, user_data):
