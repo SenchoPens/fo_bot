@@ -2,17 +2,11 @@ from telegram import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
-from ..settings import *
+
+from fo_bot.settings import *
+from fo_bot import logger
 
 
-def ask_for_contact(bot, update):
-    contact_button = KeyboardButton(text="Отправить мне контакт", request_contact=True)
-    update.message.reply_text('Поделитесь своим контактом или введите свой номер телефона, '
-                              'под которым вы зарегестрированы на сайте Findtheowner.ru.',
-                              reply_markup=ReplyKeyboardMarkup(keyboard=[[contact_button]],
-                                                               one_time_keyboard=True)
-                              )
-    return ASK_PHONE
 
 
 def fetch_number_from_contact(bot, update, user_data):
