@@ -181,6 +181,9 @@ def main():
     except FileNotFoundError:
         logger.warning('user_data or conversations dump file not found')
 
+    if __debug__:
+        conv_handler.conversations[(182705944, 182705944)] = END
+
     # Start the Bot
     updater.start_polling()
 
