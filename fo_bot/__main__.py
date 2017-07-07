@@ -200,4 +200,4 @@ if __name__ == '__main__':
         main()
     except Exception as e:
         logger.warning(f'A fatal error occured: {e}')
-    raise e
+        raise e
