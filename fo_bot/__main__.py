@@ -23,6 +23,7 @@ from fo_bot.bot_utils.api import API
 from fo_bot.bot_states import (
     auth,
     register,
+    started
 )
 
 # Enable logging
@@ -75,7 +76,7 @@ def start(bot, update):
                                          one_time_keyboard=True)
     )
 
-    return STARTED
+    return ASK_PHONE
 
 
 ### fallbacks ###
@@ -111,19 +112,22 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            STARTED: [RegexHandler('^Авторизоваться$',
-                                   auth.auth),
-                      RegexHandler('^Зарегистрироваться$',
-                                   register.register)
-                      ],
-            ASK_PHONE: [MessageHandler(Filters.contact,
-                                       auth.fetch_number_from_contact,
-                                       pass_user_data=True)
+            ASK_PHONE: [RegexHandler('^Авторизоваться$',
+                                     started.choose_auth,
+                                     pass_user_data=True),
+                        RegexHandler('^Зарегистрироваться$',
+                                     started.choose_register,
+                                     pass_user_data=True)
                         ],
-            PHONE: [MessageHandler(Filters.text,
-                                   read_phone_number,
-                                   pass_user_data=True)
-                    ],
+            FETCH_PHONE: [MessageHandler(Filters.contact,
+                                         started.fetch_number_from_contact,
+                                         pass_user_data=True)
+                          ],
+            REGISTER: [MessageHandler(Filters.text,
+                                      register.register,
+                                      pass_user_data=True)
+                       ],
+            '''
             CABINET: [RegexHandler('^(и|И)скать',
                                    search),
                       CallbackQueryHandler(ask_for_confirmation,
@@ -149,8 +153,8 @@ def main():
                                  order_sopp,
                                  pass_user_data=True)
                     ]
+            ''': []
         },
-
         fallbacks=[#CommandHandler('cancel',
                    #               cancel,
                    #               pass_user_data=True),

@@ -3,7 +3,11 @@ BOT_TOKEN = '342476710:AAG0fW1kmSiAYCbNl-IlzjmN8VjJK9aRt5w'
 MAX_DATA_LEN = 64
 
 # Bot
-END, STARTED, ASK_PHONE, ASK_EMAIL, PHONE, CABINET, ASK_ORDER_CONFIRMATION, ASK_ORDER_DOCUMENT, ORDER = range(-1, 8)
+#  \                        __________
+#   \         __           /_        _\
+#    \       /  \         /  \      /  \
+END, ASK_PHONE, FETCH_PHONE, REGISTER, CABINET, ASK_ORDER_CONFIRMATION, ASK_ORDER_DOCUMENT, ORDER = range(-1, 7)
+#
 CONVERSATION_DUMP_FILENAME = 'bot_user_conversations.pickle'
 USER_DATA_DUMP_FILENAME = 'bot_user_data.pickle'
 
