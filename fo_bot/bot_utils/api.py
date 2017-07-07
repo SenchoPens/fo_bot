@@ -6,11 +6,11 @@ from requests import get, RequestException
 logger = getLogger(__name__)
 
 
-class APIMethodException:
+class APIMethodException(RequestException):
     """Represents exception during calling a method"""
 
     def __init__(self, message, code, text):
-        self.message = message
+        super().__init__(message)
         self.code = code
         self.text = text
 
@@ -23,12 +23,21 @@ class APIMethod:
         res = get(self._url, params=kwargs)
         print(res.status_code)
         print(res.json())
+
         try:  # Probably there is a better way to raise from
             res.raise_for_status()
         except RequestException as e:
-            raise APIMethodException(f'Request to API ended up with error status code {res.status_code}',
-                                     res.status_code, res.json()['message']) from e
-        return res.json()
+            logger.warning(f'Request error: {res.status_code}')
+            raise APIMethodException(f'Something bad with request: {res.status_code}',
+                                     res.status_code, e.response) from e
+
+        resd = res.json()
+        api_err_code = resd.get('error', False)
+        if api_err_code:
+            raise APIMethodException(f'Request to API ended up with error status code {api_err_code}',
+                                     api_err_code, resd['message'])
+
+        return resd
 
 
 class API:
