@@ -10,7 +10,7 @@ from fo_bot import logger
 
 def fetch_number_from_contact(bot, update, user_data):
     phone = update.message.contact.phone_number
-    logger.info(f'User {update.effective.from_user.id} send a contact with phone number {phone}')
+    logger.info(f'User {update.effective_user.id} send a contact with phone number {phone}')
 
     user_data['phone_number'] = phone
     return user_data['chosen'](bot, update, user_data)

@@ -192,8 +192,9 @@ def main():
     save_user_data(dp.user_data)
 
 
-try:
-    main()
-except Exception as e:
-    logger.warning(f'A fatal error occured: {e}')
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        logger.warning(f'A fatal error occured: {e}')
     raise e
