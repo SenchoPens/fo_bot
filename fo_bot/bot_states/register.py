@@ -4,7 +4,7 @@ from fo_bot.bot_states import auth
 from fo_bot import api
 
 
-def ask_email(bot, update):
+def ask_email(bot, update, user_data):
     update.message.reply_text('Введите адрес своей электронной почты:')
     return REGISTER
 

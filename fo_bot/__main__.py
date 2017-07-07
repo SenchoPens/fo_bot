@@ -182,7 +182,7 @@ def main():
         logger.warning('user_data or conversations dump file not found')
 
     if __debug__:
-        conv_handler.conversations[(182705944, 182705944)] = END
+        conv_handler.conversations[(182705944, 182705944)] = None
 
     # Start the Bot
     updater.start_polling()
