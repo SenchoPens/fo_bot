@@ -19,9 +19,9 @@ class api_error_handler:
             try:
                 return func(bot, update, *args, **kwargs)
             except APIMethodException as e:
-                if APIMethodException.code == 409:  #ToDo: replace with real attrs!!!
-                    err = APIMethodException.text
-                    update.message.reply_text(APIMethodException.text)
+                if e.code == 409:  #ToDo: replace with real attrs!!!
+                    err = e.text
+                    update.message.reply_text(e.text)
                 else:
                     err = 'Something bad'
                     update.message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
