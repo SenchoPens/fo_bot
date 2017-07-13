@@ -1,46 +1,53 @@
-def search(bot, update):
-    text = update.message.text
-    query = text[text.find(' ')+1:]
-    logger.info(f'User {get_user_name(update)} made a search query {query}')
-    res = api.search(query=query)
+from telegram import (
+    ReplyKeyboardMarkup,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+)
 
-    if res.found == 0:
-        update.message.reply_text('Не найдено ни одного такого обьекта.')
-        return CABINET
+from fo_bot import logger, api
+from fo_bot.settings import *
+
+
+def cabinet_help(bot, update):
+    update.message.reply_text('Напишите \'баланс\', чтобы проверить свой баланс в любой момент.\n'
+                              'Напишите \'искать\' и кадастровый номер или адрес недвижимости, '
+                              'на которую вы хотите заказать выписку.\n'
+                              'Напишите \'заказы\', чтобы посмотреть ваши текущие заказы в стадии оплаты.'
+                              )
+
+
+def search_text(bot, update, user_data):
+    text = update.message.text
+    return _search(bot, update, user_data, query=text[text.find(' ')+1:])
+
+
+def search_command(bot, update, user_data, args):
+    return _search(bot, update, user_data, query=' '.join(args))
+
+
+def _search(bot, update, user_data, *, query):
+    logger.info(f'User {update.effective_user.name} made a search query {query}')
+    res = api.checkAddres(addres=query, phone=user_data['phone'])
 
     keyboard = []
-    for found in res.objects:
-        cutted_address = found.address[found.address.find(' ул ')+1:-1]  # leave only most important parts
-        data = str.encode('|'.join((found.cadnomer, cutted_address)))[:MAX_DATA_LEN].decode()  # cut to fit 64 bytes
+    for found in res.values():
+        address = found['addres']
+        cadnomer = found['cadNomer']
+
+        # leave only most important parts (after street) - assume user knows what town he wants
+        compressed_address = address[address.find(' ул ') + 1:-1]
+        data = str.encode('|'.join((cadnomer, compressed_address)))[:MAX_DATA_LEN].decode()  # cut to fit 64 bytes
         logger.info(data)
-        keyboard.append([InlineKeyboardButton(text=f'{found.address} | {found.cadnomer}',
+
+        keyboard.append([InlineKeyboardButton(text=f'{address} | {cadnomer}',
                                               callback_data=data
                                               )]
                         )
     #ToDo: gently split keyboard into chunks to fit markup size
     update.message.reply_text('Вот что я нашел:',
                               reply_markup=InlineKeyboardMarkup(keyboard[:20]))
-    return CABINET
+    return ORDER
 
-def ask_for_confirmation(bot, update, user_data):
-    try:
-        cadnomer, address = update.callback_query.data.split('|')
-    except ValueError:
-        update.callback_query.message.reply_text('Извините, произошла какая-то ошибка.\n'''
-                                                 'Повторите ваш поиск.')
-        return CABINET
-
-    user = update.callback_query.from_user
-    logger.info(f'User {user.name} have chosen cadnomer {cadnomer}.')
-    user_data['cadnomer'] = cadnomer
-    update.callback_query.message.reply_text(f'Вы выбрали {cadnomer}\n'
-                                             f'Адрес: {address}\n'
-                                             'Заказать выписку?',
-                                             reply_markup=ReplyKeyboardMarkup([['Да', 'Нет']],
-                                                                              one_time_keyboard=True
-                                                                              )
-                                             )
-    return ASK_ORDER_DOCUMENT
 
 def list_orders(bot, update, user_data):
     orders = user_data['orders']
@@ -54,26 +61,3 @@ def list_orders(bot, update, user_data):
                                   f'Стоимость услуги: {order.info.cost}\n'
                                   f'Номер заказа: {order.id}\n'
                                   )
-
-
-### ASK_ORDER_DOCUMENT ###
-def choose_order_type(bot, update, user_data):
-    logger.info(f'User {get_user_name(update)} is making an order for cadnomer {user_data["cadnomer"]}')
-    object_full_info = api.get_object_full_info(user_data['cadnomer'])
-
-    keyboard = []
-    if object_full_info.documents.xzp.available:
-        keyboard.append([ORDERS['xzp'].name])
-    if object_full_info.documents.sopp.available:
-        keyboard.append([ORDERS['sopp'].name])
-    if not keyboard:
-        update.message.reply_text('Извините, но по этому обьекты нельзя заказать ни одного документа.')
-        cancel_chosen(bot, update, user_data)
-        return CABINET
-
-    user_data['code'] = object_full_info.encoded_object
-    keyboard.append(['Отменить'])
-    update.message.reply_text('Выберите услугу:',
-                              reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
-                              )
-    return ORDER

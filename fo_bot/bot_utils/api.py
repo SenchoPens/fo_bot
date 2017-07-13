@@ -9,9 +9,9 @@ logger = getLogger(__name__)
 class APIMethodException(RequestException):
     """Represents exception during calling a method"""
 
-    def __init__(self, message, code, text):
+    def __init__(self, message, code: int, text):
         super().__init__(message)
-        self.code = code
+        self.code: int = code
         self.text = text
 
 
@@ -32,7 +32,7 @@ class APIMethod:
                                      res.status_code, e.response) from e
 
         resd = res.json()
-        api_err_code = resd.get('error', False)
+        api_err_code = int(resd.get('error', False))
         if api_err_code:
             raise APIMethodException(f'Request to API ended up with error status code {api_err_code}',
                                      api_err_code, resd['message'])

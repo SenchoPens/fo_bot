@@ -21,9 +21,10 @@ from fo_bot.settings import *
 from fo_bot.bot_utils.error_handler import api_error_handler
 from fo_bot.bot_utils.api import API
 from fo_bot.bot_states import (
-    auth,
     register,
-    started
+    started,
+    cabinet,
+    order,
 )
 
 # Enable logging
@@ -32,42 +33,15 @@ logger.info('-' * 50)
 api = API()
 
 
-################################### Helpers ######################################
-
-### Helpers for handlers ###
-def get_user_name(update) -> str:
-    return update.message.from_user.name
-
-
-### Additional handlers ###
-def check_login(bot, update, user_data):
-    pass
-
-def cabinet_help(bot, update):
-    update.message.reply_text('Напишите \'баланс\', чтобы проверить свой баланс в любой момент.\n'
-                              'Напишите \'искать\' и кадастровый номер или адрес недвижимости, '
-                              'на которую вы хотите заказать выписку.\n'
-                              'Напишите \'заказы\', чтобы посмотреть ваши текущие заказы в стадии оплаты.'
-                              )
-
-def make_cabinet(bot, update, user_data):
-    user_data['logged'] = True
-    if user_data.get('orders', None) is None:
-        user_data['orders'] = []
-    cabinet_help(bot, update)
-
-############################# Conversation Handlers ##############################
-
 ### entry_points ###
 def start(bot, update):
-    user_name = update.message.from_user.name
-    logger.info(f'User {user_name} started the conversation.')
+    user = update.effective_user
+    logger.info(f'User {user.name} started the conversation.')
 
     update.message.reply_text(
-        f'Здравствуйте, {user_name}.\n'
+        f'Здравствуйте, {user.first_name}.\n'
         'Чтобы завершить разговор, напишите "Завершить".'
     )
-
     update.message.reply_text(
         'Вы хотите авторизоваться в существующую учетную запись FindTheOwner.ru,'
         'или зарегестрироваться?',
@@ -75,7 +49,6 @@ def start(bot, update):
                                           ['Зарегистрироваться']],
                                          one_time_keyboard=True)
     )
-
     return ASK_PHONE
 
 
@@ -85,14 +58,14 @@ def show_help(bot, update, user_data):
                               'Напишите /help, чтобы вывести список комманд.'
                               )
     if user_data['logged']:
-        cabinet_help(bot, update)
+        cabinet.cabinet_help(bot, update)
 
 
 ## If user logged: ##
 @api_error_handler(None)
 def display_balance(bot, update, user_data):
     if user_data['logged']:
-        balance: int = api.balance(phone=user_data['phone_number']).balance
+        balance = api.balance(phone=user_data['phone'])['balance']
         update.message.reply_text(f'Ваш баланс: {balance} рублей.')
 
 
@@ -107,6 +80,7 @@ def main():
     updater = Updater(token=BOT_TOKEN)
 
     dp = updater.dispatcher
+
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -127,33 +101,23 @@ def main():
                                       register.register,
                                       pass_user_data=True)
                        ],
-            '''
+
             CABINET: [RegexHandler('^(и|И)скать',
-                                   search),
-                      CallbackQueryHandler(ask_for_confirmation,
-                                           pass_user_data=True),
+                                   cabinet.search_text,
+                                   pass_user_data=True),
+                      CommandHandler('search',
+                                     cabinet.search_command,
+                                     pass_user_data=True,
+                                     pass_args=True),
+
                       RegexHandler('^заказы$',
-                                   list_orders,
+                                   cabinet.list_orders,
                                    pass_user_data=True)
                       ],
-            ASK_ORDER_DOCUMENT: [RegexHandler('^Нет$',
-                                              cancel_chosen,
-                                              pass_user_data=True),
-                                 RegexHandler('^Да$',
-                                              choose_order_type,
-                                              pass_user_data=True)
-                                 ],
-            ORDER: [RegexHandler('^Отменить$',
-                                 cancel_order,
-                                 pass_user_data=True),
-                    RegexHandler(f'^{escape(ORDERS["xzp"].name)}$',
-                                 order_xzp,
-                                 pass_user_data=True),
-                    RegexHandler(f'^{escape(ORDERS["sopp"].name)}$',
-                                 order_sopp,
-                                 pass_user_data=True)
-                    ]
-            ''': []
+            ORDER: [CallbackQueryHandler(order.ask_order_type,
+                                         
+                                         pass_user_data=True)
+                    ],
         },
         fallbacks=[#CommandHandler('cancel',
                    #               cancel,
@@ -167,9 +131,11 @@ def main():
                    RegexHandler('^(б|Б)аланс$',
                                 display_balance,
                                 pass_user_data=True),
+                   CommandHandler('balance',
+                                  display_balance,
+                                  pass_user_data=True),
                    ]
     )
-
     dp.add_handler(conv_handler)
 
     # log all errors
@@ -182,7 +148,12 @@ def main():
         logger.warning('user_data or conversations dump file not found')
 
     if __debug__:
-        conv_handler.conversations[(182705944, 182705944)] = None
+        a = 2
+        if a == 1:
+            conv_handler.conversations[(182705944, 182705944)] = None
+        elif a == 2:
+            conv_handler.conversations[(182705944, 182705944)] = 3
+            dp.user_data[182705944] = {'phone': '79256183765', 'logged': True, 'orders': []}
 
     # Start the Bot
     updater.start_polling()

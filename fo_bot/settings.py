@@ -4,23 +4,12 @@ MAX_DATA_LEN = 64
 
 # Bot
 #  \                        __________
-#   \         __           /_        _\
-#    \       /  \         /  \      /  \
-END, ASK_PHONE, FETCH_PHONE, REGISTER, CABINET, ASK_ORDER_CONFIRMATION, ASK_ORDER_DOCUMENT, ORDER = range(-1, 7)
+#   \         __           /_        _\       __
+#    \       /  \         /  \      /  \     /  \
+END, ASK_PHONE, FETCH_PHONE, REGISTER, CABINET, ORDER = range(-1, 5)
 #
 CONVERSATION_DUMP_FILENAME = 'bot_user_conversations.pickle'
 USER_DATA_DUMP_FILENAME = 'bot_user_data.pickle'
 
-# Rosreestr API
-'''
-ORDERS: Dict[str, OrderType] = {'xzp': OrderType(name='Электронная выписка (ЭВ) (250р.)',
-                                                 cost=250,
-                                                 api_name='XZP'
-                                                 ),
-                                  'sopp': OrderType(name='Электронная выписка о переходе прав (250р.)',
-                                                    cost=250,
-                                                    api_name='SOPP'
-                                                    )
-                                }
-'''
-API_TOKEN = '9AEE-ZLJY-QJAN-DXF7'
+TYPES = [{'text': 'Электронная выписка ЕГРН (250р.)', 'id': 10},
+         ]

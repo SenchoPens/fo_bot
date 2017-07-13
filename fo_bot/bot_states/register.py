@@ -13,4 +13,5 @@ def ask_email(bot, update, user_data):
 def register(bot, update, user_data):
     email = update.message.text
     api.register(phone=user_data['phone'], email=email)
+    update.message.reply_text('Vi saregalis')
     return auth.auth(bot, update, user_data)
