@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from re import escape
-
 from telegram import (
     ReplyKeyboardMarkup
 )
@@ -54,24 +52,35 @@ def start(bot, update):
 
 ### fallbacks ###
 def show_help(bot, update, user_data):
-    update.message.reply_text('Напишите /cancel или \'завершить\', чтобы прекратить разговор.\n'
+    update.message.reply_text('Напишите /end, чтобы прекратить разговор.'
                               'Напишите /help, чтобы вывести список комманд.'
                               )
-    if user_data['logged']:
+    if user_data.get('logged', False):
         cabinet.cabinet_help(bot, update)
 
 
 ## If user logged: ##
 @api_error_handler(None)
 def display_balance(bot, update, user_data):
-    if user_data['logged']:
+    if user_data.get('logged', False):
         balance = api.balance(phone=user_data['phone'])['balance']
-        update.message.reply_text(f'Ваш баланс: {balance} рублей.')
+        update.message.reply_text(f'Ваш баланс: {balance or 0} рублей.')
 
 
 ### error handlers ###
 def error(bot, update, error):
     logger.warning(f'Update "{update}" caused error "{error}"')
+
+
+def cancel(bot, update, user_data):
+    if user_data.get('logged', False):
+        return CABINET
+
+
+def end(bot, update, user_data):
+    cancel(bot, update, user_data)
+    user_data['logged'] = False
+    return END
 
 
 ########################################################################################################################
@@ -109,19 +118,24 @@ def main():
                                      cabinet.search_command,
                                      pass_user_data=True,
                                      pass_args=True),
-
-                      RegexHandler('^заказы$',
-                                   cabinet.list_orders,
-                                   pass_user_data=True)
+                      #RegexHandler('^заказы$',
+                      #             cabinet.list_orders,
+                      #             pass_user_data=True)
                       ],
             ORDER: [CallbackQueryHandler(order.ask_order_type,
-                                         
-                                         pass_user_data=True)
+                                         pattern=r'^.*|.*$',
+                                         pass_user_data=True),
+                    CallbackQueryHandler(order.order_doc,
+                                         pattern='^\d+$',
+                                         pass_user_data=True),
                     ],
         },
-        fallbacks=[#CommandHandler('cancel',
-                   #               cancel,
-                   #               pass_user_data=True),
+        fallbacks=[CommandHandler('cancel',
+                                  cancel,
+                                  pass_user_data=True),
+                   CommandHandler('end',
+                                  end,
+                                  pass_user_data=True),
                    #RegexHandler('^(з|З)авершить$',
                    #             cancel,
                    #             pass_user_data=True),
@@ -148,12 +162,12 @@ def main():
         logger.warning('user_data or conversations dump file not found')
 
     if __debug__:
-        a = 2
+        a = 1
         if a == 1:
             conv_handler.conversations[(182705944, 182705944)] = None
         elif a == 2:
             conv_handler.conversations[(182705944, 182705944)] = 3
-            dp.user_data[182705944] = {'phone': '79256183765', 'logged': True, 'orders': []}
+            dp.user_data[182705944] = {'phone': '9263793151', 'logged': True, 'orders': []}
 
     # Start the Bot
     updater.start_polling()

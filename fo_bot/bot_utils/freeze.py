@@ -1,6 +1,6 @@
 import pickle
 
-from settings import *
+from fo_bot.settings import *
 
 
 def save_user_data(user_data):

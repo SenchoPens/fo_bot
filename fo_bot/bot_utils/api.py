@@ -2,6 +2,8 @@ from logging import getLogger
 
 from requests import get, RequestException
 
+from fo_bot.settings import *
+
 
 logger = getLogger(__name__)
 
@@ -16,11 +18,11 @@ class APIMethodException(RequestException):
 
 
 class APIMethod:
-    def __init__(self, url):
-        self._url = url
+    def __init__(self, method):
+        self._method = method
 
     def __call__(self, **kwargs):
-        res = get(self._url, params=kwargs)
+        res = get(API_URL, params={'token': API_TOKEN, 'class': self._method, **kwargs})
         print(res.status_code)
         print(res.json())
 
@@ -31,25 +33,24 @@ class APIMethod:
             raise APIMethodException(f'Something bad with request: {res.status_code}',
                                      res.status_code, e.response) from e
 
-        resd = res.json()
-        api_err_code = int(resd.get('error', False))
+        res_json = res.json()
+        api_err_code = int(res_json.get('error', False))
         if api_err_code:
             raise APIMethodException(f'Request to API ended up with error status code {api_err_code}',
-                                     api_err_code, resd['message'])
+                                     api_err_code, res_json['message'])
 
-        return resd
+        return res_json
 
 
 class API:
-    _root_url = 'http://findtheowner.ru/test/'
     def __getattr__(self, item):
-        logger.debug('Method ')
-        return APIMethod(''.join((self._root_url, item, '.php')))
+        logger.debug('API Method call {item}')
+        return APIMethod(item)
 
 
 def main():
     t = API()
-    t.asdf()
+    t.balance(phone='9263793151')
 
 
 if __name__ == '__main__':

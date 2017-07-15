@@ -1,18 +1,19 @@
 from telegram import (
-    ReplyKeyboardMarkup,
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
 
 from fo_bot import logger, api
+from fo_bot.bot_utils.error_handler import api_error_handler
 from fo_bot.settings import *
 
 
 def cabinet_help(bot, update):
-    update.message.reply_text('Напишите \'баланс\', чтобы проверить свой баланс в любой момент.\n'
-                              'Напишите \'искать\' и кадастровый номер или адрес недвижимости, '
-                              'на которую вы хотите заказать выписку.\n'
-                              'Напишите \'заказы\', чтобы посмотреть ваши текущие заказы в стадии оплаты.'
+    update.message.reply_text('Напишите \'баланс\', чтобы проверить свой баланс в любой момент.'
+                              '\nНапишите \'искать\' и кадастровый номер или адрес недвижимости, '
+                              'на которую вы хотите заказать выписку.'
+                              '\nНапишите \'cancel\', чтобы отменить процедуру заказа.'
+                              #'\nНапишите \'заказы\', чтобы посмотреть ваши текущие заказы в стадии оплаты.'
                               )
 
 
@@ -25,6 +26,7 @@ def search_command(bot, update, user_data, args):
     return _search(bot, update, user_data, query=' '.join(args))
 
 
+@api_error_handler(CABINET)
 def _search(bot, update, user_data, *, query):
     logger.info(f'User {update.effective_user.name} made a search query {query}')
     res = api.checkAddres(addres=query, phone=user_data['phone'])
@@ -37,6 +39,7 @@ def _search(bot, update, user_data, *, query):
         # leave only most important parts (after street) - assume user knows what town he wants
         compressed_address = address[address.find(' ул ') + 1:-1]
         data = str.encode('|'.join((cadnomer, compressed_address)))[:MAX_DATA_LEN].decode()  # cut to fit 64 bytes
+        print(type(data))
         logger.info(data)
 
         keyboard.append([InlineKeyboardButton(text=f'{address} | {cadnomer}',
@@ -59,5 +62,4 @@ def list_orders(bot, update, user_data):
     for order in orders:
         update.message.reply_text(f'Название услуги: {order.info.name}\n'
                                   f'Стоимость услуги: {order.info.cost}\n'
-                                  f'Номер заказа: {order.id}\n'
-                                  )
+                                  f'Номер заказа: {order.id}\n')

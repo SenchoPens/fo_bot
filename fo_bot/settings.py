@@ -13,3 +13,6 @@ USER_DATA_DUMP_FILENAME = 'bot_user_data.pickle'
 
 TYPES = [{'text': 'Электронная выписка ЕГРН (250р.)', 'id': 10},
          ]
+
+API_TOKEN = 'D5E43FGD7A3E63E57443B54112D4'
+API_URL = 'http://findtheowner.ru/api/v0.php'
