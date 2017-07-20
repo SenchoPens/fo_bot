@@ -2,8 +2,6 @@ from logging import getLogger
 
 from requests import get, RequestException
 
-from fo_bot.settings import *
-
 
 logger = getLogger(__name__)
 
@@ -11,18 +9,20 @@ logger = getLogger(__name__)
 class APIMethodException(RequestException):
     """Represents exception during calling a method"""
 
-    def __init__(self, message, code: int, text):
+    def __init__(self, message, code, text):
         super().__init__(message)
-        self.code: int = code
+        self.code = code
         self.text = text
 
 
 class APIMethod:
-    def __init__(self, method):
+    _url = 'http://findtheowner.ru/api/v0.php'
+    def __init__(self, method, token):
         self._method = method
+        self._token = token
 
     def __call__(self, **kwargs):
-        res = get(API_URL, params={'token': API_TOKEN, 'class': self._method, **kwargs})
+        res = get(self._url, params={'token': self._token, 'class': self._method, **kwargs})
         print(res.status_code)
         print(res.json())
 
@@ -43,13 +43,17 @@ class APIMethod:
 
 
 class API:
+    def __init__(self, token):
+        self._token = token
+
     def __getattr__(self, item):
         logger.debug('API Method call {item}')
-        return APIMethod(item)
+        return APIMethod(item, token=self._token)
 
 
 def main():
-    t = API()
+    from ..settings import API_TOKEN
+    t = API(API_TOKEN)
     t.balance(phone='9263793151')
 
 

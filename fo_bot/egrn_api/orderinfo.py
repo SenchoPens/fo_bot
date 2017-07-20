@@ -1,6 +1,6 @@
 from typing import Dict, List, NamedTuple
 
-from egrn_api import APIObject
+from fo_bot.egrn_api import APIObject
 
 
 class OrderedDocument(NamedTuple):

@@ -3,8 +3,7 @@ from functools import partial
 
 import requests
 
-from settings import API_TOKEN
-from egrn_api import (
+from fo_bot.egrn_api import (
     Search,
     ObjectFullInfo,
     SavedOrder,
@@ -72,17 +71,3 @@ class API:
                                         }
                                   ).json()
                    )
-
-
-if __name__ == '__main__':
-    api = API(API_TOKEN)
-    ex_cad = '76:23:060701:3277'
-    res = api.search(ex_cad)
-    print('Example cadnomer found property', res.objects[0])
-    info = api.get_object_full_info(res.objects[0].cadnomer)
-    print(info.encoded_object)
-    print(info.egrn.property_object.address)
-    print(info.encoded_object)
-    order = api.save_order(info.encoded_object, documents='XZP')
-
-    #print(api.get_transaction_info(ex_id))

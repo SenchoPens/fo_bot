@@ -1,8 +1,15 @@
 from typing import Dict
 
+from requests import RequestException
 
-class EGRNError(Exception):
-    pass
+
+class EGRNError(RequestException):
+    """Represents exception during calling an API method"""
+
+    def __init__(self, message, code, text):
+        super().__init__(message)
+        self.code = code
+        self.text = text
 
 
 class APIObject:
@@ -11,4 +18,5 @@ class APIObject:
             raise EGRNError(f'Server responce is empty')
         self.errors = json['error']
         if self.errors:
-            raise EGRNError(f'`errors` field in server responce is not empty: {self.errors}')
+            raise EGRNError(f'`errors` field in server responce is not empty: {self.errors}',
+                            self.errors['code'], self.errors['mess'])

@@ -1,6 +1,6 @@
 from typing import NamedTuple, Dict
 
-from egrn_api import APIObject
+from fo_bot.egrn_api import APIObject
 
 
 class Document(NamedTuple):

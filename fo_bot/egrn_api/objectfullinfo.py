@@ -1,6 +1,6 @@
-from typing import NamedTuple, List, Dict
+from typing import NamedTuple, Dict, Any
 
-from egrn_api import (
+from fo_bot.egrn_api import (
     Documents,
     PropertyObject,
     process_object,
@@ -10,7 +10,7 @@ from egrn_api import (
 
 class EGRN(NamedTuple):
     property_object: PropertyObject
-    details: Dict[str, str]
+    details: Dict[str, Any]
 
 
 class ObjectFullInfo(APIObject):
@@ -24,5 +24,4 @@ class ObjectFullInfo(APIObject):
     @staticmethod
     def process_egrn(raw_egrn: Dict) -> EGRN:
         return EGRN(property_object=process_object(raw_egrn['object']),
-                    details=raw_egrn['details']
-                    )
+                    details=raw_egrn['details'])

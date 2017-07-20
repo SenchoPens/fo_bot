@@ -16,3 +16,7 @@ TYPES = [{'text': 'Электронная выписка ЕГРН (250р.)', 'id
 
 API_TOKEN = 'D5E43FGD7A3E63E57443B54112D4'
 API_URL = 'http://findtheowner.ru/api/v0.php'
+
+ROSREEST_API_TOKEN = '9AEE-ZLJY-QJAN-DXF7'
+
+GMAPS_API_TOKEN = 'AIzaSyBAV7blDSrOsKuuX2426O5U0tzPQEcs0Cw'

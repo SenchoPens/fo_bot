@@ -1,6 +1,6 @@
 from typing import List
 
-from egrn_api import APIObject
+from fo_bot.egrn_api import APIObject
 
 
 class Pay(APIObject):

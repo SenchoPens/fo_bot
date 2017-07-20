@@ -14,8 +14,10 @@ from .pay import Pay
 
 from .api import API
 
+from .error_handler import api_error_handler
+
 
 __all__ = ['API', 'PropertyObject', 'ObjectFullInfo', 'Search',
            'Documents', 'process_object', 'process_objects', 'SavedOrder',
-           'TransactionInfo', 'Pay', 'APIObject'
+           'TransactionInfo', 'Pay', 'APIObject', 'api_error_handler',
            ]

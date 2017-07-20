@@ -1,8 +1,8 @@
 from typing import List, Dict
 
-from egrn_api import (PropertyObject,
-                      process_objects,
-                      APIObject)
+from fo_bot.egrn_api import (PropertyObject,
+                             process_objects,
+                             APIObject)
 
 class Search(APIObject):
     def __init__(self, json: Dict):

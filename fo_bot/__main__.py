@@ -13,11 +13,10 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
-from fo_bot import logger
+from fo_bot import logger, api
 from fo_bot.bot_utils.freeze import *
 from fo_bot.settings import *
 from fo_bot.bot_utils.error_handler import api_error_handler
-from fo_bot.bot_utils.api import API
 from fo_bot.bot_states import (
     register,
     started,
@@ -27,8 +26,6 @@ from fo_bot.bot_states import (
 
 # Enable logging
 logger.info('-' * 50)
-
-api = API()
 
 
 ### entry_points ###
@@ -52,8 +49,8 @@ def start(bot, update):
 
 ### fallbacks ###
 def show_help(bot, update, user_data):
-    update.message.reply_text('Напишите /end, чтобы прекратить разговор.'
-                              'Напишите /help, чтобы вывести список комманд.'
+    update.message.reply_text('Напишите \'/end\' или \'завершить\', чтобы прекратить разговор.'
+                              'Напишите \'/help\' или \'помощь\', чтобы вывести список комманд.'
                               )
     if user_data.get('logged', False):
         cabinet.cabinet_help(bot, update)
@@ -90,7 +87,7 @@ def main():
 
     dp = updater.dispatcher
 
-
+    cad_pattern = r'^(\d+:)+\d+$'
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
@@ -118,30 +115,38 @@ def main():
                                      cabinet.search_command,
                                      pass_user_data=True,
                                      pass_args=True),
-                      #RegexHandler('^заказы$',
-                      #             cabinet.list_orders,
-                      #             pass_user_data=True)
+                      CallbackQueryHandler(cabinet.read_more_button,
+                                           pattern=cad_pattern),
                       ],
             ORDER: [CallbackQueryHandler(order.ask_order_type,
-                                         pattern=r'^.*|.*$',
+                                         pattern=cad_pattern,
                                          pass_user_data=True),
                     CallbackQueryHandler(order.order_doc,
-                                         pattern='^\d+$',
+                                         pattern=r'^\d+$',
                                          pass_user_data=True),
                     ],
         },
         fallbacks=[CommandHandler('cancel',
                                   cancel,
                                   pass_user_data=True),
+                   RegexHandler('^отменить$',
+                                cancel,
+                                pass_user_data=True),
+
+                   RegexHandler('^(з|З)авершить$',
+                                end,
+                                pass_user_data=True),
                    CommandHandler('end',
                                   end,
                                   pass_user_data=True),
-                   #RegexHandler('^(з|З)авершить$',
-                   #             cancel,
-                   #             pass_user_data=True),
+
                    CommandHandler('help',
                                   show_help,
                                   pass_user_data=True),
+                   RegexHandler('помощь',
+                                show_help,
+                                pass_user_data=True),
+
                    RegexHandler('^(б|Б)аланс$',
                                 display_balance,
                                 pass_user_data=True),
@@ -162,7 +167,7 @@ def main():
         logger.warning('user_data or conversations dump file not found')
 
     if __debug__:
-        a = 1
+        a = 2
         if a == 1:
             conv_handler.conversations[(182705944, 182705944)] = None
         elif a == 2:

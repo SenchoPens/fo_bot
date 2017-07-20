@@ -1,6 +1,6 @@
 from typing import Dict, NamedTuple, Optional, List
 
-from egrn_api import APIObject
+from fo_bot.egrn_api import APIObject
 
 class DocumentsId(NamedTuple):
     xzp: Optional[int]

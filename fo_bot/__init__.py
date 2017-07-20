@@ -1,7 +1,9 @@
 import logging
 
-from fo_bot.bot_utils.api import API
+import googlemaps
 
+from . import bot_utils, egrn_api
+from .settings import *
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
@@ -9,7 +11,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     )
 logger = logging.getLogger(__name__)
 
-api = API()
+api = bot_utils.API(API_TOKEN)
+rosreest_api = egrn_api.API(ROSREEST_API_TOKEN)
+gmaps_api = googlemaps.Client(key=GMAPS_API_TOKEN)
 
 
 __all__ = ['settings', 'freeze', 'bot_states', 'bot_utils', 'logger']

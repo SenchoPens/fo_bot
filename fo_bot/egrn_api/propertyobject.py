@@ -20,6 +20,7 @@ def process_objects(raw_objects: List[Dict]) -> Generator[PropertyObject, None, 
 
 
 def process_object(raw_object: Dict) -> PropertyObject:
+    print(raw_object)
     return PropertyObject(cadnomer=raw_object['CADNOMER'],
                           address=raw_object['ADDRESS'],
                           property_type=raw_object['TYPE'],
