@@ -1,2 +1,4 @@
 .idea
 *.pickle
+Pipfile.lock
+.python-version
