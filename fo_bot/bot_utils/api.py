@@ -23,8 +23,6 @@ class APIMethod:
 
     def __call__(self, **kwargs):
         res = get(self._url, params={'token': self._token, 'class': self._method, **kwargs})
-        print(res.status_code)
-        print(res.json())
 
         try:  # Probably there is a better way to raise from
             res.raise_for_status()

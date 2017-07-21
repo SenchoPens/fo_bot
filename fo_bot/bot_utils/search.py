@@ -10,7 +10,6 @@ from fo_bot.settings import *
 
 
 def summarize(found):
-    print(found)
     return (f'Адрес: {found.address}\n'
             f'Кадастровый номер: {found.cadnomer}\n'
             f'Площадь: {found.area}\n'
@@ -25,19 +24,31 @@ def write_full_info(full_info):
 
 @egrn_api.api_error_handler(CABINET)
 def read_more(bot, update, *, cadnomer):
+    print(cadnomer)
     full_info = rosreest_api.get_object_full_info(cadnomer)
-    show_map(bot, update, address=full_info.egrn.property_object.address)
+    address = full_info.egrn.property_object.address
+    show_map(bot, update, address=address)
     update.effective_message.reply_text(
         write_full_info(full_info),
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='Заказать выписку',
-                                                                 callback_data=cadnomer
+                                                                 callback_data=f'{int(Prefix.ORDER_TYPE)}{cadnomer}'
                                                                  )]])
     )
-    return ORDER
+    return CABINET
 
 
 def show_map(bot, update, *, address):
-    gmaps_resp = gmaps_api.geocode(address)[0]
+    address_parts = address.split(',')
+    house_part = [i for i, p in enumerate(address_parts) if ' д ' in p]
+    house_address = ','.join(address_parts[:(len(house_part) and house_part[0]
+                                             or len(address_parts)) + 1])
+    print(address)
+    print(house_address)
+    res = gmaps_api.geocode(address)
+    print(res)
+    if not res:
+        return
+    gmaps_resp = res[0]
     print(gmaps_resp)
     gmaps_location = gmaps_resp['geometry']['location']
     lat, lng = gmaps_location['lat'], gmaps_location['lng']
@@ -62,7 +73,7 @@ def search_reestr(bot, update, user_data, *, query):
         update.message.reply_text(summarize(found),
                                   reply_markup=InlineKeyboardMarkup(
                                       [[InlineKeyboardButton(text='Подробнее',
-                                                             callback_data=found.cadnomer
+                                                             callback_data=f'{int(Prefix.FULL_DATA)}{found.cadnomer}'
                                                              )]]))
     update.message.reply_text('Если вы не нашли нужный вам обьект, введите более точный адрес.')
     return CABINET

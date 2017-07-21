@@ -19,7 +19,12 @@ class api_error_handler:
             try:
                 return func(bot, update, *args, **kwargs)
             except EGRNError as e:
-                update.message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
+                if e.code == 503:
+                    if e.text == 'Service is temporarily unavailable':
+                        update.message.reply_text('Сервисы Росреестра времменно недоступны.'
+                                                  'Пожалуйста, попробуйте позже.')
+                update.message.reply_text('Извините, произошла какая-то ошибка.'
+                                          'Пожалуйста, попробуйте позже.')
                 logger.info(f'Error with apirosreestr request for {update.effective_user.name}: {e}')
                 return self.bad
         return wrapped

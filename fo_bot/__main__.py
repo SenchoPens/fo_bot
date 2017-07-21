@@ -81,13 +81,15 @@ def end(bot, update, user_data):
 
 
 ########################################################################################################################
+def cad_pattern(n):
+    return '^' + str(int(n)) + r'(\d+:)+\d+$'
 
 def main():
     updater = Updater(token=BOT_TOKEN)
 
     dp = updater.dispatcher
+    print(cad_pattern(Prefix.FULL_DATA))
 
-    cad_pattern = r'^(\d+:)+\d+$'
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
@@ -116,12 +118,12 @@ def main():
                                      pass_user_data=True,
                                      pass_args=True),
                       CallbackQueryHandler(cabinet.read_more_button,
-                                           pattern=cad_pattern),
+                                           pattern=cad_pattern(Prefix.FULL_DATA)),
+                      CallbackQueryHandler(cabinet.ask_order_type,
+                                           pattern=cad_pattern(Prefix.ORDER_TYPE),
+                                           pass_user_data=True),
                       ],
-            ORDER: [CallbackQueryHandler(order.ask_order_type,
-                                         pattern=cad_pattern,
-                                         pass_user_data=True),
-                    CallbackQueryHandler(order.order_doc,
+            ORDER: [CallbackQueryHandler(order.order_doc,
                                          pattern=r'^\d+$',
                                          pass_user_data=True),
                     ],
