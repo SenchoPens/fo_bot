@@ -88,7 +88,6 @@ def main():
     updater = Updater(token=BOT_TOKEN)
 
     dp = updater.dispatcher
-    print(cad_pattern(Prefix.FULL_DATA))
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -181,8 +180,6 @@ def main():
 
     updater.idle()
 
-    print(dp.user_data)
-    print(conv_handler.conversations)
     save_conversations(conv_handler.conversations)
     save_user_data(dp.user_data)
 

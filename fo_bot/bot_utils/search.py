@@ -24,7 +24,6 @@ def write_full_info(full_info):
 
 @egrn_api.api_error_handler(CABINET)
 def read_more(bot, update, *, cadnomer):
-    print(cadnomer)
     full_info = rosreest_api.get_object_full_info(cadnomer)
     address = full_info.egrn.property_object.address
     show_map(bot, update, address=address)
@@ -42,14 +41,10 @@ def show_map(bot, update, *, address):
     house_part = [i for i, p in enumerate(address_parts) if ' д ' in p]
     house_address = ','.join(address_parts[:(len(house_part) and house_part[0]
                                              or len(address_parts)) + 1])
-    print(address)
-    print(house_address)
     res = gmaps_api.geocode(address)
-    print(res)
     if not res:
         return
     gmaps_resp = res[0]
-    print(gmaps_resp)
     gmaps_location = gmaps_resp['geometry']['location']
     lat, lng = gmaps_location['lat'], gmaps_location['lng']
     bot.send_location(chat_id=update.effective_user.id, latitude=lat, longitude=lng)

@@ -49,7 +49,6 @@ class API:
     def save_order(self, object_code: str, *, documents: List[str]) -> SavedOrder:
         if not documents:
             raise ValueError
-        print(documents)
 
         return SavedOrder(json=self.post(url=API._save_order_url,
                                          data={'encoded_object': object_code,

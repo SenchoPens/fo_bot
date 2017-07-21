@@ -5,10 +5,8 @@ from fo_bot import api, logger, rosreest_api
 
 @api_error_handler(CABINET)
 def order_doc(bot, update, user_data):
-    print(user_data['cadnomer'])
     address = rosreest_api.get_object_full_info(user_data['cadnomer']).egrn.property_object.address
     logger.info(f'User {update.effective_user.name} made an order.')
-    print(address, user_data['cadnomer'], user_data['phone'], update.callback_query.data)
     api.addOrder(phone=user_data['phone'], cadastr=user_data['cadnomer'],
                  type=update.callback_query.data, addres=address)
     update.callback_query.message.reply_text('Заказ осущсествлен. Вы можете посмотреть его в '
