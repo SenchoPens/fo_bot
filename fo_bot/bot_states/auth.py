@@ -15,5 +15,9 @@ def make_cabinet(bot, update, user_data):
 def auth(bot, update, user_data):
     api.auth(phone=user_data['phone'])
     update.message.reply_text('Вы успешно авторизовались')
+    update.message.reply_text('Уважаемый пользователь. С моей помощью Вы можете '
+                              'заказать выписку ЕГРН прямо в мессенджере. '
+                              'Но для этого Вам надо пополнить баланс в сервисе '
+                              '"Узнай владельца недвижимости" на сайте www.findtheowner.ru.')
     make_cabinet(bot, update, user_data)
     return CABINET
