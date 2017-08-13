@@ -28,7 +28,9 @@ from fo_bot.bot_states import (
 logger.info('-' * 50)
 
 
-### entry_points ###
+""" Entry points """
+
+
 def start(bot, update):
     user = update.effective_user
     logger.info(f'User {user.name} started the conversation.')
@@ -47,7 +49,9 @@ def start(bot, update):
     return ASK_PHONE
 
 
-### fallbacks ###
+""" Fallbacks """
+
+
 def show_help(bot, update, user_data):
     update.message.reply_text('Напишите \'/end\' или \'завершить\', чтобы прекратить разговор.'
                               'Напишите \'/help\' или \'помощь\', чтобы вывести список комманд.'
@@ -56,7 +60,6 @@ def show_help(bot, update, user_data):
         cabinet.cabinet_help(bot, update)
 
 
-## If user logged: ##
 @api_error_handler(None)
 def display_balance(bot, update, user_data):
     if user_data.get('logged', False):
@@ -64,17 +67,19 @@ def display_balance(bot, update, user_data):
         update.message.reply_text(f'Ваш баланс: {balance or 0} рублей.')
 
 
-### error handlers ###
-def error(bot, update, error):
+def handle_error(bot, update, error):
+    """ Error handler """
     logger.warning(f'Update "{update}" caused error "{error}"')
 
 
 def cancel(bot, update, user_data):
+    """ Cancel procedure of logging or ordering (/cancel command) """
     if user_data.get('logged', False):
         return CABINET
 
 
 def end(bot, update, user_data):
+    """ End conversation (/end command) """
     cancel(bot, update, user_data)
     user_data['logged'] = False
     return END
@@ -83,6 +88,17 @@ def end(bot, update, user_data):
 ########################################################################################################################
 def cad_pattern(n):
     return '^' + str(int(n)) + r'(\d+:)+\d+$'
+
+
+def make_rus_regex(name):
+    return ''.join(('^', '(', name[0].lower(), '|'))
+
+
+def make_handler(handler, english, russian,
+                 pass_user_data=True, pass_args=False):
+    english_handler = CommandHandler(english, handler, pass_user_data=pass_user_data)
+    russian_handler = RegexHandler()
+
 
 def main():
     updater = Updater(token=BOT_TOKEN)
@@ -159,7 +175,7 @@ def main():
     dp.add_handler(conv_handler)
 
     # log all errors
-    dp.add_error_handler(error)
+    dp.add_error_handler(handle_error)
 
     try:
         dp.user_data = load_user_data()
