@@ -12,7 +12,6 @@ def remove_prefix(f):
     @wraps(f)
     def wrapper(bot, update, *args, **kwargs):
         update.callback_query.data = update.callback_query.data[1:]
-        print(update.callback_query.data)
         return f(bot, update, *args, **kwargs)
     return wrapper
 
