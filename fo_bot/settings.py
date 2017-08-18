@@ -8,7 +8,7 @@ MAX_DATA_LEN = 64
 #   \         __           /_        _\       __
 #    \       /  \         /  \      /  \     /  \
 END, ASK_PHONE, FETCH_PHONE, REGISTER, CABINET, ORDER = range(-1, 5)
-#
+
 CONVERSATION_DUMP_FILENAME = 'bot_user_conversations.pickle'
 USER_DATA_DUMP_FILENAME = 'bot_user_data.pickle'
 
@@ -27,3 +27,5 @@ API_URL = 'http://findtheowner.ru/api/v0.php'
 ROSREEST_API_TOKEN = '9AEE-ZLJY-QJAN-DXF7'
 
 GMAPS_API_TOKEN = 'AIzaSyBAV7blDSrOsKuuX2426O5U0tzPQEcs0Cw'
+
+LIST_OF_ADMINS = [182705944]

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from telegram import (
-    ReplyKeyboardMarkup
+    ReplyKeyboardMarkup,
 )
 from telegram.ext import (
     Updater,
@@ -13,7 +15,7 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 
-from fo_bot import logger, api
+from fo_bot import logger, api, ActionName
 from fo_bot.bot_utils.freeze import *
 from fo_bot.settings import *
 from fo_bot.bot_utils.error_handler import api_error_handler
@@ -22,6 +24,7 @@ from fo_bot.bot_states import (
     started,
     cabinet,
     order,
+    admin,
 )
 
 # Enable logging
@@ -37,13 +40,13 @@ def start(bot, update):
 
     update.message.reply_text(
         f'Здравствуйте, {user.first_name}.\n'
-        'Чтобы завершить разговор, напишите "Завершить".'
+        f'Чтобы завершить разговор, напишите "{ActionName.end.rus}".'
     )
     update.message.reply_text(
         'Вы хотите авторизоваться в существующую учетную запись FindTheOwner.ru,'
         'или зарегестрироваться?',
-        reply_markup=ReplyKeyboardMarkup([['Авторизоваться'],
-                                          ['Зарегистрироваться']],
+        reply_markup=ReplyKeyboardMarkup([[ActionName.auth.rus],
+                                          [ActionName.register.rus]],
                                          one_time_keyboard=True)
     )
     return ASK_PHONE
@@ -53,9 +56,10 @@ def start(bot, update):
 
 
 def show_help(bot, update, user_data):
-    update.message.reply_text('Напишите \'/end\' или \'завершить\', чтобы прекратить разговор.'
-                              'Напишите \'/help\' или \'помощь\', чтобы вывести список комманд.'
-                              )
+    update.message.reply_text(
+        f'Напишите \'/{ActionName.end.eng}\' или \'{ActionName.end.rus}\', чтобы прекратить разговор.'
+        f'Напишите \'/{ActionName.show_help.eng}\' или \'{ActionName.show_help.rus}\', чтобы вывести список комманд.'
+    )
     if user_data.get('logged', False):
         cabinet.cabinet_help(bot, update)
 
@@ -64,7 +68,7 @@ def show_help(bot, update, user_data):
 def display_balance(bot, update, user_data):
     if user_data.get('logged', False):
         balance = api.balance(phone=user_data['phone'])['balance']
-        update.message.reply_text(f'Ваш баланс: {balance or 0} рублей.')
+        update.message.reply_text(f'Ваш баланс: {balance or "0"} рублей.')
 
 
 def handle_error(bot, update, error):
@@ -76,6 +80,7 @@ def cancel(bot, update, user_data):
     """ Cancel procedure of logging or ordering (/cancel command) """
     if user_data.get('logged', False):
         return CABINET
+    return END
 
 
 def end(bot, update, user_data):
@@ -94,10 +99,11 @@ def make_rus_regex(name):
     return ''.join(('^', '(', name[0].lower(), '|'))
 
 
-def make_handler(handler, english, russian,
-                 pass_user_data=True, pass_args=False):
-    english_handler = CommandHandler(english, handler, pass_user_data=pass_user_data)
-    russian_handler = RegexHandler()
+def make_handler(callback, name, pass_user_data=True):
+    english_handler = CommandHandler(name.eng, callback, pass_user_data=pass_user_data)
+    russian_handler = RegexHandler(re.compile('^' + name.rus + '$', flags=re.IGNORECASE),
+                                   callback, pass_user_data=pass_user_data)
+    return [english_handler, russian_handler]
 
 
 def main():
@@ -106,15 +112,13 @@ def main():
     dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=make_handler(start, ActionName.start),
 
         states={
-            ASK_PHONE: [RegexHandler('^Авторизоваться$',
-                                     started.choose_auth,
-                                     pass_user_data=True),
-                        RegexHandler('^Зарегистрироваться$',
-                                     started.choose_register,
-                                     pass_user_data=True)
+            ASK_PHONE: [*make_handler(started.choose_auth, ActionName.auth,
+                                      pass_user_data=True),
+                        *make_handler(started.choose_register, ActionName.register,
+                                      pass_user_data=True),
                         ],
             FETCH_PHONE: [MessageHandler(Filters.contact,
                                          started.fetch_number_from_contact,
@@ -125,15 +129,17 @@ def main():
                                       pass_user_data=True)
                        ],
 
-            CABINET: [RegexHandler('^(и|И)скать',
+            CABINET: [RegexHandler(re.compile(ActionName.search.rus, flags=re.IGNORECASE),
                                    cabinet.search_text,
                                    pass_user_data=True),
-                      CommandHandler('search',
+                      CommandHandler(ActionName.search.eng,
                                      cabinet.search_command,
                                      pass_user_data=True,
                                      pass_args=True),
+
                       CallbackQueryHandler(cabinet.read_more_button,
                                            pattern=cad_pattern(Prefix.FULL_DATA)),
+
                       CallbackQueryHandler(cabinet.ask_order_type,
                                            pattern=cad_pattern(Prefix.ORDER_TYPE),
                                            pass_user_data=True),
@@ -143,33 +149,19 @@ def main():
                                          pass_user_data=True),
                     ],
         },
-        fallbacks=[CommandHandler('cancel',
-                                  cancel,
-                                  pass_user_data=True),
-                   RegexHandler('^отменить$',
-                                cancel,
-                                pass_user_data=True),
+        fallbacks=[*make_handler(cancel, ActionName.cancel,
+                                 pass_user_data=True),
 
-                   RegexHandler('^(з|З)авершить$',
-                                end,
-                                pass_user_data=True),
-                   CommandHandler('end',
-                                  end,
-                                  pass_user_data=True),
+                   *make_handler(end, ActionName.end,
+                                 pass_user_data=True),
 
-                   CommandHandler('help',
-                                  show_help,
-                                  pass_user_data=True),
-                   RegexHandler('помощь',
-                                show_help,
-                                pass_user_data=True),
+                   *make_handler(show_help, ActionName.show_help,
+                                 pass_user_data=True),
 
-                   RegexHandler('^(б|Б)аланс$',
-                                display_balance,
-                                pass_user_data=True),
-                   CommandHandler('balance',
-                                  display_balance,
-                                  pass_user_data=True),
+                   *make_handler(display_balance, ActionName.show_balance,
+                                 pass_user_data=True),
+
+                   CommandHandler('admin_help', admin.show_admin_help)
                    ]
     )
     dp.add_handler(conv_handler)

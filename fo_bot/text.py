@@ -1,0 +1,19 @@
+from typing import NamedTuple
+from enum import Enum
+
+
+class Name(NamedTuple):
+    rus: str
+    eng: str
+
+
+class ActionName():
+    start = Name(rus='Начать', eng='start')
+    show_balance = Name(rus='Баланс', eng='balance')
+    end = Name(rus='Завершить', eng='end')
+    cancel = Name(rus='Отменить', eng='cancel')
+    show_help = Name(rus='Помощь', eng='help')
+    auth = Name(rus='Авторизоваться', eng='auth')
+    register = Name(rus='Зарестистрироваться', eng='register')
+    change_cost = Name(rus='Изменить стоимость выписки', eng='change_cost')
+    search = Name(rus='искать', eng='search')
