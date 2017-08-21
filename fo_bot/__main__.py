@@ -99,7 +99,7 @@ def make_rus_regex(name):
     return ''.join(('^', '(', name[0].lower(), '|'))
 
 
-def make_handler(callback, name, pass_user_data=True):
+def make_handler(callback, name, pass_user_data=False):
     english_handler = CommandHandler(name.eng, callback, pass_user_data=pass_user_data)
     russian_handler = RegexHandler(re.compile('^' + name.rus + '$', flags=re.IGNORECASE),
                                    callback, pass_user_data=pass_user_data)
