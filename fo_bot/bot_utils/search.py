@@ -2,6 +2,7 @@ from telegram import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
+import googlemaps.exceptions as gmaps
 
 from fo_bot import logger, api, rosreest_api
 from fo_bot.bot_utils.error_handler import api_error_handler
@@ -26,7 +27,10 @@ def write_full_info(full_info):
 def read_more(bot, update, *, cadnomer):
     full_info = rosreest_api.get_object_full_info(cadnomer)
     address = full_info.egrn.property_object.address
-    show_map(bot, update, address=address)
+    try:
+        show_map(bot, update, address=address)
+    except (gmaps.ApiError, gmaps.TransportError, gmaps.Timeout):
+        pass
     update.effective_message.reply_text(
         write_full_info(full_info),
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='Заказать выписку',
