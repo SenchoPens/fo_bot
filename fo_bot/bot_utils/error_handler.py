@@ -19,12 +19,12 @@ class api_error_handler:
             try:
                 return func(bot, update, *args, **kwargs)
             except APIMethodException as e:
-                if 400 <= e.code < 500:  # client error
+                if e.code in range(400, 500):  # client error
                     err = e.text
-                    update.message.reply_text(e.text)
+                    update.effective_message.reply_text(e.text)
                 else:
                     err = 'Something bad'
-                    update.message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
+                    update.effective_message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
                 logger.warning(f'API error: "{err}" with api request by {update.effective_user.name}')
                 return self.bad
         return wrapped

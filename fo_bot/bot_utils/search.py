@@ -11,10 +11,12 @@ from fo_bot.settings import *
 
 
 def summarize(found):
-    return (f'Адрес: {found.address}\n'
-            f'Кадастровый номер: {found.cadnomer}\n'
-            f'Площадь: {found.area}\n'
-            f'Тип обьекта: {found.property_type}\n')
+    return (
+        f'Адрес: {found.address}\n'
+        f'Кадастровый номер: {found.cadnomer}\n'
+        f'Площадь: {found.area}\n'
+        f'Тип обьекта: {found.property_type}\n'
+    )
 
 
 def write_full_info(full_info):
