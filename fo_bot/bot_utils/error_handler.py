@@ -19,7 +19,7 @@ class api_error_handler:
             try:
                 return func(bot, update, *args, **kwargs)
             except APIMethodException as e:
-                if 400 <= e.code < 500:  # client error
+                if e.code in range(400, 500):  # client error
                     err = e.text
                     update.effective_message.reply_text(e.text)
                 else:
