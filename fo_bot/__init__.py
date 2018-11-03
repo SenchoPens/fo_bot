@@ -18,5 +18,5 @@ rosreest_api = egrn_api.API(ROSREEST_API_TOKEN)
 gmaps_api = googlemaps.Client(key=GMAPS_API_TOKEN)
 
 
-__all__ = ['settings', 'freeze', 'bot_states', 'bot_utils', 'logger',
+__all__ = ['settings', 'bot_states', 'bot_utils', 'logger',
            'restricted', 'ActionName']
