@@ -4,7 +4,7 @@ from enum import IntEnum, auto
 
 
 # Telegram API
-BOT_TOKEN = os.environ('BOT_TOKEN')
+BOT_TOKEN = os.environ['BOT_TOKEN']
 MAX_DATA_LEN = 64
 
 # Bot
@@ -25,11 +25,11 @@ class Prefix(IntEnum):
     ORDER_TYPE = auto()
 
 
-API_TOKEN = os.environ('API_TOKEN')
+API_TOKEN = os.environ['API_TOKEN']
 API_URL = 'http://findtheowner.ru/api/v0.php'
 
-ROSREEST_API_TOKEN = os.environ('ROSREESTR_API_TOKEN')
+ROSREEST_API_TOKEN = os.environ['ROSREESTR_API_TOKEN']
 
-GMAPS_API_TOKEN = os.environ('GMAPS_API_TOKEN')
+GMAPS_API_TOKEN = os.environ['GMAPS_API_TOKEN']
 
-LIST_OF_ADMINS = os.environ('ADMINS').split(':')
+LIST_OF_ADMINS = os.environ['ADMINS'].split(':')
