@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import googlemaps
 
@@ -9,7 +10,9 @@ from .settings import *
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
-                    filename='bot_log'
+                    handlers= [logging.StreamHandler(sys.stdout),
+                               logging.FileHandler('bot_log'),
+                               ],
                     )
 logger = logging.getLogger(__name__)
 
