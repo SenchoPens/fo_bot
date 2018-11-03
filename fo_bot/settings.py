@@ -1,6 +1,10 @@
+import os
+
 from enum import IntEnum, auto
+
+
 # Telegram API
-BOT_TOKEN = '342476710:AAG0fW1kmSiAYCbNl-IlzjmN8VjJK9aRt5w'
+BOT_TOKEN = os.environ('BOT_TOKEN')
 MAX_DATA_LEN = 64
 
 # Bot
@@ -21,11 +25,11 @@ class Prefix(IntEnum):
     ORDER_TYPE = auto()
 
 
-API_TOKEN = 'D5E43FGD7A3E63E57443B54112D4'
+API_TOKEN = os.environ('API_TOKEN')
 API_URL = 'http://findtheowner.ru/api/v0.php'
 
-ROSREEST_API_TOKEN = '9AEE-ZLJY-QJAN-DXF7'
+ROSREEST_API_TOKEN = os.environ('ROSREESTR_API_TOKEN')
 
-GMAPS_API_TOKEN = 'AIzaSyBAV7blDSrOsKuuX2426O5U0tzPQEcs0Cw'
+GMAPS_API_TOKEN = os.environ('GMAPS_API_TOKEN')
 
-LIST_OF_ADMINS = [182705944]
+LIST_OF_ADMINS = os.environ('ADMINS').split(':')
