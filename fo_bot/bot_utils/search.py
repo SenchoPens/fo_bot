@@ -31,8 +31,8 @@ def read_more(bot, update, *, cadnomer):
     address = full_info.egrn.property_object.address
     try:
         show_map(bot, update, address=address)
-    except (gmaps.ApiError, gmaps.TransportError, gmaps.Timeout):
-        pass
+    except (gmaps.ApiError, gmaps.TransportError, gmaps.Timeout) as e:
+        logger.warning(f'Gmaps API error: {e}')
     update.effective_message.reply_text(
         write_full_info(full_info),
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='Заказать выписку',

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import sys
 
 from telegram import (
     ReplyKeyboardMarkup,
@@ -57,6 +58,7 @@ def start(bot, update):
 
 def show_help(bot, update, user_data):
     update.message.reply_text(
+    update.message.reply_text(
         f'Напишите \'/{ActionName.end.eng}\' или \'{ActionName.end.rus}\', чтобы прекратить разговор.'
         f'Напишите \'/{ActionName.show_help.eng}\' или \'{ActionName.show_help.rus}\', чтобы вывести список комманд.'
     )
@@ -107,6 +109,10 @@ def make_handler(callback, name, pass_user_data=False):
 
 
 def main():
+    request_kwargs = {}
+    if len(sys.argv) > 1:
+        pass
+
     updater = Updater(token=BOT_TOKEN)
 
     dp = updater.dispatcher
