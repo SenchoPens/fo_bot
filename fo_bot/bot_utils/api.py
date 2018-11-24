@@ -27,7 +27,7 @@ class APIMethod:
         try:  # Probably there is a better way to raise from
             res.raise_for_status()
         except RequestException as e:
-            logger.warning(f'Request error: {res.status_code}')
+            logger.warning(f'Request error: {res.status_code}. Request URL: {res.url}. Request text: {res.text}')
             raise APIMethodException(f'Something bad with request: {res.status_code}',
                                      res.status_code, e.response) from e
 
