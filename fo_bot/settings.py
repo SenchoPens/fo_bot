@@ -33,3 +33,12 @@ ROSREEST_API_TOKEN = os.environ['ROSREESTR_API_TOKEN']
 GMAPS_API_TOKEN = os.environ['GMAPS_API_TOKEN']
 
 LIST_OF_ADMINS = os.environ['ADMINS'].split(':')
+
+REQUEST_KWARGS={
+    'proxy_url': 'socks5://112.133.225.56:9999',
+    # Optional, if you need authentication:
+    # 'urllib3_proxy_kwargs': {
+        # 'username': 'PROXY_USER',
+        # 'password': 'PROXY_PASS',
+    # }
+}
