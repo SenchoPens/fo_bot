@@ -3,7 +3,7 @@ url = "https://pypi.python.org/simple"
 verify_ssl = true
 
 [packages]
-python-telegram-bot = "*"
+python-telegram-bot = {extras = ["socks"], version = "*"}
 requests = "*"
 googlemaps = "*"
 pysocks = "*"

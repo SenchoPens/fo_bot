@@ -5,7 +5,9 @@ from fo_bot import api, logger, rosreest_api
 
 @api_error_handler(CABINET)
 def order_doc(bot, update, user_data):
-    address = rosreest_api.get_object_full_info(user_data['cadnomer']).egrn.property_object.address
+    logger.info('Started ordering')
+    full_info = rosreest_api.get_object_full_info(user_data['cadnomer'])
+    address = full_info.egrn.property_object.address
     logger.info(f'User {update.effective_user.name} made an order.')
     api.addOrder(phone=user_data['phone'], cadastr=user_data['cadnomer'],
                  type=update.callback_query.data, addres=address)

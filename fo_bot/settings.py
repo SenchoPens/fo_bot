@@ -16,7 +16,7 @@ END, ASK_PHONE, FETCH_PHONE, REGISTER, CABINET, ORDER = range(-1, 5)
 CONVERSATION_DUMP_FILENAME = 'bot_user_conversations.pickle'
 USER_DATA_DUMP_FILENAME = 'bot_user_data.pickle'
 
-TYPES = [{'text': 'Электронная выписка ЕГРН (250р.)', 'id': 10},
+TYPES = [{'text': 'Электронная выписка ЕГРН (250р.)', 'id': 1},
          ]
 
 
@@ -35,10 +35,11 @@ GMAPS_API_TOKEN = os.environ['GMAPS_API_TOKEN']
 LIST_OF_ADMINS = os.environ['ADMINS'].split(':')
 
 REQUEST_KWARGS={
-    'proxy_url': 'socks5://112.133.225.56:9999',
+    # 'proxy_url': 'socks5://112.133.225.56:9999',
+    'proxy_url': 'socks5://phobos.public.opennetwork.cc:1090',
     # Optional, if you need authentication:
-    # 'urllib3_proxy_kwargs': {
-        # 'username': 'PROXY_USER',
-        # 'password': 'PROXY_PASS',
-    # }
+    'urllib3_proxy_kwargs': {
+        'username': '182705944',
+        'password': 'LUiO08lV',
+    }
 }

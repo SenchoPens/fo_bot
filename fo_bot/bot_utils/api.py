@@ -2,6 +2,8 @@ from logging import getLogger
 
 from requests import get, RequestException
 
+# from fo_bot import logger
+
 
 logger = getLogger(__name__)
 
@@ -27,7 +29,8 @@ class APIMethod:
         try:  # Probably there is a better way to raise from
             res.raise_for_status()
         except RequestException as e:
-            logger.warning(f'Request error: {res.status_code}. Request URL: {res.url}. Request text: {res.text}')
+            error_text = res.text.replace('\n', r'\n')
+            logger.warning(f'Request error: {res.status_code}. Request URL: {res.url}. Request text: {error_text}')
             raise APIMethodException(f'Something bad with request: {res.status_code}',
                                      res.status_code, e.response) from e
 
