@@ -108,10 +108,11 @@ def make_handler(callback, name, pass_user_data=False):
 
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == 'proxy':
-        print('yo proxy')
+    if 'proxy' in sys.argv:
+        logger.info(f'Starting in PROXY mode. Proxy URL: {REQUEST_KWARGS["proxy_url"]}')
         updater = Updater(token=BOT_TOKEN, request_kwargs=REQUEST_KWARGS)
     else:
+        logger.info('Starting in NORMAL mode')
         updater = Updater(token=BOT_TOKEN)
 
     dp = updater.dispatcher

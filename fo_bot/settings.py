@@ -34,12 +34,11 @@ GMAPS_API_TOKEN = os.environ['GMAPS_API_TOKEN']
 
 LIST_OF_ADMINS = os.environ['ADMINS'].split(':')
 
-REQUEST_KWARGS={
-    # 'proxy_url': 'socks5://112.133.225.56:9999',
-    'proxy_url': 'socks5://phobos.public.opennetwork.cc:1090',
-    # Optional, if you need authentication:
+REQUEST_KWARGS = {
+    # socks5://address:port
+    'proxy_url': os.environ.get('PROXY_URL', None),
     'urllib3_proxy_kwargs': {
-        'username': '182705944',
-        'password': 'LUiO08lV',
+        'username': os.environ.get('PROXY_USERNAME', None),
+        'password': os.environ.get('PROXY_PASSWORD', None),
     }
 }
