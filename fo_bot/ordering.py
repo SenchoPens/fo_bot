@@ -57,7 +57,6 @@ def ask_order_type(update, context):
     context.user_data['cadnomer'] = cadnomer
     update.callback_query.message.reply_text(
         f'Вы выбрали обьект с кадастровым номер: {cadnomer}.' 
-        f'\nВведите {ActionName.cancel.get_pretty()}, чтобы отменить процедуру заказа.' 
         f'\nВы можете заказать:',
         reply_markup=InlineKeyboardMarkup(keyboard),
         one_time_keboard=True
