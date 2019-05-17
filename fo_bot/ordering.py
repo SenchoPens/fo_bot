@@ -8,7 +8,6 @@ from telegram import (
 )
 
 from fo_bot.logger import logger
-from fo_bot.api import api_error_handler
 from fo_bot.settings import *
 from fo_bot import api, gmaps_api, rosreest_api
 from fo_bot.cabinet import logged_only
@@ -16,8 +15,15 @@ from fo_bot.text import ActionName
 import fo_bot.egrn_api as egrn_api
 
 
+def callbackquery_message_to_message(f):
+    @wraps(f)
+    def wrap(update, context):
+        update.message = update.callback_query.message
+        return f(update, context)
+    return wrap
+
+
 @logged_only
-@api_error_handler(None)
 def show_balance(update, context):
     balance = api.balance(phone=context.user_data['phone'])['data']['balance']
     update.message.reply_text(f'Ваш баланс: {balance} рублей.')
@@ -36,6 +42,7 @@ def remove_prefix(f):
 
 
 @remove_prefix
+@callbackquery_message_to_message
 def read_more_button(update, context):
     return read_more_egrn(update, context, cadnumber=update.callback_query.data)
 
@@ -64,9 +71,9 @@ def ask_order_type(update, context):
     return MAIN
 
 
+@callbackquery_message_to_message
 @remove_prefix
 @logged_only
-@api_error_handler(MAIN)
 def order_doc(update, context):
     order_id = update.callback_query.data
 
@@ -127,7 +134,6 @@ def show_map(update, context, *, address):
     context.bot.send_location(chat_id=update.effective_user.id, latitude=lat, longitude=lng)
 
 
-@api_error_handler(MAIN)
 def read_more(update, context, *, cadnumber):
     logger.info(f'User {update.effective_user.name} requested info on cadnumber {cadnumber}')
 
@@ -153,6 +159,7 @@ def read_more(update, context, *, cadnumber):
     return MAIN
 
 
+@callbackquery_message_to_message
 @egrn_api.api_error_handler(MAIN)
 def read_more_egrn(update, context, *, cadnumber):
     logger.info(f'User {update.effective_user.name} requested info on cadnumber {cadnumber}')
@@ -179,7 +186,6 @@ def read_more_egrn(update, context, *, cadnumber):
     return MAIN
 
 
-@api_error_handler(MAIN)
 def search_reestr(update, context):
     text = update.message.text
     query = text[text.find(' ') + 1:]
@@ -222,7 +228,6 @@ def start_recharging(update, context):
     return RECHARGE
 
 
-@api_error_handler(MAIN)
 def recharge(update, context):
     amount = update.message.text[:10]
     try:

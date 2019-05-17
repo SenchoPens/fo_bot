@@ -7,7 +7,6 @@ from telegram import (
 
 from fo_bot.text import ActionName
 from fo_bot.logger import logger
-from fo_bot.api import api_error_handler
 from fo_bot.settings import *
 from fo_bot import api
 
@@ -40,7 +39,6 @@ def ask_email(update, context):
     return REGISTER
 
 
-@api_error_handler(END)
 def register(update, context):
     email = update.message.text
     api.register(phone=context.user_data['phone'], email=email)
@@ -82,7 +80,6 @@ def make_cabinet(update, context):
         context.user_data['orders'] = []
 
 
-@api_error_handler(MAIN)
 def auth(update, context):
     api.auth(phone=context.user_data['phone'])
     update.message.reply_text(

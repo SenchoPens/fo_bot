@@ -66,29 +66,6 @@ class API:
         return APIMethod(method=method, token=self._token, request_type=request_type)
 
 
-class api_error_handler:
-    """Decorator around functions that make api requests."""
-
-    def __init__(self, bad):
-        self.bad = bad
-
-    def __call__(self, func):
-        @wraps(func)
-        def wrapped(update, context, *args, **kwargs):
-            try:
-                return func(update, context, *args, **kwargs)
-            except APIMethodException as e:
-                if e.code in range(400, 500):  # client error
-                    err = e.text
-                    update.effective_message.reply_text(e.text)
-                else:
-                    err = 'Something bad'
-                    update.effective_message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
-                logger.warning(f'API error: "{err}" with api request by {update.effective_user.name}')
-                return self.bad
-        return wrapped
-
-
 def main():
     import pprint
     t = API(API_TOKEN)

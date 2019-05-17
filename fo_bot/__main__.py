@@ -3,25 +3,20 @@
 import re
 import sys
 
-from telegram import (
-    ReplyKeyboardMarkup,
-)
 from telegram.ext import (
     Updater,
     CommandHandler,
     ConversationHandler,
-    RegexHandler,
     MessageHandler,
     Filters,
     CallbackQueryHandler,
     PicklePersistence,
 )
 
-from fo_bot import api, user_access
+from fo_bot import user_access
 from fo_bot.logger import logger
 from fo_bot.settings import *
-from fo_bot.api import api_error_handler
-from fo_bot.pickle_helpers import dump_pickle
+from fo_bot.api import APIMethodException
 from fo_bot.access import AdminControl, ValuerControl
 from fo_bot.text import ActionName
 from fo_bot.ordering import (
@@ -110,6 +105,16 @@ def set_contact(update, context):
 def handle_error(update, context):
     """ Error handler """
     logger.warning(f'Update "{update}" caused error "{context.error}"')
+    try:
+        raise context.error
+    except APIMethodException as e:
+        if e.code in range(400, 500):  # client error
+            err = e.text
+            update.effective_message.reply_text(e.text)
+        else:
+            err = 'Something bad'
+            update.effective_message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
+        logger.warning(f'API error: "{err}" with api request by {update.effective_user.name}')
 
 
 def cancel(update, context):
@@ -198,16 +203,10 @@ def main():
             make_handler(end, ActionName.end),
             make_handler(show_help, ActionName.show_help),
         ],
-        #per_message=True,
         name='fobot_conversation',
         persistent=True,
     )
     dp.add_handler(conv_handler)
-
-    user_access_controllers = [
-    ]
-    for handler in user_access_controllers:
-        dp.add_handler(handler)
 
     # log all errors
     dp.add_error_handler(handle_error)
