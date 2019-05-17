@@ -9,7 +9,7 @@ from fo_bot.access import User
 
 api = API(API_TOKEN)
 rosreest_api = egrn_api.API(ROSREEST_API_TOKEN)
-gmaps_api = googlemaps.Client(key=GMAPS_API_TOKEN)
+gmaps_api = googlemaps.Client(key=GMAPS_API_TOKEN, timeout=10, retry_timeout=7)
 user_access = shelve.open(USER_ACCESS_FILENAME)
 for phone in OVERSEERS_PHONES:
     user_access[phone] = User(access_level=OVERSEER, name='', phone=phone)
