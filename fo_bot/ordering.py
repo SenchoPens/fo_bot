@@ -56,7 +56,7 @@ def ask_order_type(update, context):
         ])
     context.user_data['cadnomer'] = cadnomer
     update.callback_query.message.reply_text(
-        f'Вы выбрали обьект с кадастровым номер: {cadnomer}.' 
+        f'Вы выбрали обьект с кадастровым номером: {cadnomer}.' 
         f'\nВы можете заказать:',
         reply_markup=InlineKeyboardMarkup(keyboard),
         one_time_keboard=True
@@ -197,7 +197,7 @@ def search_reestr(update, context):
     update.message.reply_text('Вот что я нашел:')
     if len(res) == 1:
         found = res[0]
-        return read_more(update, context, cadnumber=found['number'])
+        return read_more_egrn(update, context, cadnumber=found['number'])
 
     for found in res[:5]:
         update.message.reply_text(
