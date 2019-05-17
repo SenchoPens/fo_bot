@@ -37,7 +37,7 @@ def remove_prefix(f):
 
 @remove_prefix
 def read_more_button(update, context):
-    return read_more(update, context, cadnumber=update.callback_query.data)
+    return read_more_egrn(update, context, cadnumber=update.callback_query.data)
 
 
 @remove_prefix
@@ -162,15 +162,20 @@ def read_more_egrn(update, context, *, cadnumber):
 
     info = rosreest_api.get_object_full_info(cadnumber)
     address = info.egrn.property_object.address
+
     try:
         show_map(update, context, address=address)
     except (gmaps.exceptions.ApiError, gmaps.exceptions.TransportError, gmaps.exceptions.Timeout) as e:
         logger.warning(f'Gmaps API error: {e}')
+
     update.effective_message.reply_text(
-        text='\n'.join(': '.join(args) for args in info.egrn.details.items()),
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(text='Заказать выписку',
-                                                                 callback_data=f'{int(CallbackPrefix.ORDER_TYPE)}{cadnumber}'
-                                                                 )]])
+        text='\n'.join(': '.join((k, str(v))) for (k, v) in info.egrn.details.items()),
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton(
+                text='Заказать выписку',
+                callback_data=f'{int(CallbackPrefix.ORDER_TYPE)}{cadnumber}' )
+            ]]
+        )
     )
     return MAIN
 
