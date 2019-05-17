@@ -1,13 +1,15 @@
 from typing import NamedTuple
-from enum import Enum
 
 
 class Name(NamedTuple):
     rus: str
     eng: str
 
+    def get_pretty(self):
+        return '«' + self.rus + '»'
 
-class ActionName():
+
+class ActionName:
     start = Name(rus='Начать', eng='start')
     show_balance = Name(rus='Баланс', eng='balance')
     end = Name(rus='Завершить', eng='end')
@@ -16,4 +18,5 @@ class ActionName():
     auth = Name(rus='Авторизоваться', eng='auth')
     register = Name(rus='Зарестистрироваться', eng='register')
     change_cost = Name(rus='Изменить стоимость выписки', eng='change_cost')
-    search = Name(rus='искать', eng='search')
+    recharge = Name(rus='Пополнить', eng='recharge')
+    search = Name(rus='Искать', eng='search')

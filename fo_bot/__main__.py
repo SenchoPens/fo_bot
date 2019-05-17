@@ -14,18 +14,30 @@ from telegram.ext import (
     MessageHandler,
     Filters,
     CallbackQueryHandler,
+    PicklePersistence,
 )
 
-from fo_bot import logger, api, ActionName
-from fo_bot.bot_utils.freeze import *
+from fo_bot import api, user_access
+from fo_bot.logger import logger
 from fo_bot.settings import *
-from fo_bot.bot_utils.error_handler import api_error_handler
-from fo_bot.bot_states import (
+from fo_bot.api import api_error_handler
+from fo_bot.pickle_helpers import dump_pickle
+from fo_bot.access import AdminControl, ValuerControl
+from fo_bot.text import ActionName
+from fo_bot.ordering import (
+    search_reestr,
+    read_more_button,
+    ask_order_type,
+    order_doc,
+    recharge,
+    start_recharging,
+    show_balance,
+)
+from fo_bot.cabinet import (
+    choose_auth,
+    choose_register,
+    fetch_number_from_contact,
     register,
-    started,
-    cabinet,
-    order,
-    admin,
 )
 
 # Enable logging
@@ -35,167 +47,186 @@ logger.info('-' * 50)
 """ Entry points """
 
 
-def start(bot, update):
+def start(update, context):
     user = update.effective_user
+    context.user_data['logged'] = False
+    context.user_data['phone'] = ''
     logger.info(f'User {user.name} started the conversation.')
 
     update.message.reply_text(
         f'Здравствуйте, {user.first_name}.\n'
-        f'Чтобы завершить разговор, напишите "{ActionName.end.rus}".'
     )
-    update.message.reply_text(
-        'Вы хотите авторизоваться в существующую учетную запись FindTheOwner.ru,'
-        'или зарегестрироваться?',
-        reply_markup=ReplyKeyboardMarkup([[ActionName.auth.rus],
-                                          [ActionName.register.rus]],
-                                         one_time_keyboard=True)
-    )
-    return ASK_PHONE
+    show_help(update, context)
+    return MAIN
 
 
 """ Fallbacks """
 
 
-def show_help(bot, update, user_data):
+def show_help(update, context):
     update.message.reply_text(
-        f'Напишите \'/{ActionName.end.eng}\' или \'{ActionName.end.rus}\', чтобы прекратить разговор.'
-        f'Напишите \'/{ActionName.show_help.eng}\' или \'{ActionName.show_help.rus}\', чтобы вывести список комманд.'
+        f'Напишите {ActionName.search.get_pretty()} и адрес, чтобы увидеть все обьекты реестра по этому адресу, '
+        f'посмотреть по обьектам всю доступную информацию из реестра, а также заказать на какой-нибудь из них выписку.'
+        f'\nНапишите {ActionName.search.get_pretty()} и кадастровый номер, чтобы посмотреть всю доступную информацию из реестра '
+        f'по обьекту с этим номером, а также заказать на этот обьект выписку.'
+        f'\nНапишите {ActionName.show_help.get_pretty()}, чтобы показать эту справку.'
+        f'\n\nНапишите {ActionName.show_balance.get_pretty()}, чтобы проверить свой баланс личного кабинета на сайте '
+        f'findtheowner.ru.'
+        f'\nНапишите {ActionName.recharge.get_pretty()}, чтобы пополнить свой баланс.'
+        f'\nНапишите {ActionName.cancel.get_pretty()}, чтобы отменить процедуру заказа выписки.'
+        f'\nНапишите {ActionName.end.get_pretty()}, чтобы прекратить наш диалог.'
     )
-    if user_data.get('logged', False):
-        cabinet.cabinet_help(bot, update)
+    phone = context.user_data['phone']
+    if phone not in user_access:
+        return
+
+    access = user_access[phone].access_level
+    if access == OVERSEER:
+        update.message.reply_text(
+            'Чтобы добавить или удалить администратора, сначала перешлите боту его контакт, '
+            'а потом напишите /add_admin, чтобы добавить администратора, или /remove_admin, чтобы удалить.\n'
+            'Чтобы посмотреть список логинов всех администраторов, напишите /list_admins.\n'
+        )
+    if access in (ADMIN, OVERSEER):
+        update.message.reply_text(
+            'Чтобы добавить или удалить оценщика, сначала перешлите боту его контакт, '
+            'а потом напишите /add_valuer, чтобы добавить администратора, или /remove_valuer, чтобы удалить.\n'
+            'Чтобы посмотреть список логинов всех оценщиков, напишите /list_valuers.\n'
+            'Если вы не знаете, как переслать контакт пользователя, прочитайте статью: '
+            'https://telegrammix.ru/kontakty/kak-podelitsya-kontaktom-v-telegramme.html'
+        )
+    return
 
 
-@api_error_handler(None)
-def display_balance(bot, update, user_data):
-    if user_data.get('logged', False):
-        balance = api.balance(phone=user_data['phone'])['balance']
-        update.message.reply_text(f'Ваш баланс: {balance or "0"} рублей.')
+def set_contact(update, context):
+    contact = update.message.contact
+    phone = contact.phone_number
+    context.user_data['contact'] = phone
+    context.user_data['contact_name'] = contact.first_name + ('' if contact.last_name is None else contact.last_name)
+    logger.info(f'Recieved contact {phone} from user {update.effective_user.id} with phone {context.user_data["phone"]}')
+    return
 
 
-def handle_error(bot, update, error):
+def handle_error(update, context):
     """ Error handler """
-    logger.warning(f'Update "{update}" caused error "{error}"')
+    logger.warning(f'Update "{update}" caused error "{context.error}"')
 
 
-def cancel(bot, update, user_data):
+def cancel(update, context):
     """ Cancel procedure of logging or ordering (/cancel command) """
-    if user_data.get('logged', False):
-        return CABINET
-    return END
+    return MAIN
 
 
-def end(bot, update, user_data):
+def end(update, context):
     """ End conversation (/end command) """
-    cancel(bot, update, user_data)
-    user_data['logged'] = False
+    cancel(update, context)
+    context.user_data['logged'] = False
     return END
 
 
 ########################################################################################################################
-def cad_pattern(n):
+def cad_pattern(n: CallbackPrefix):
+    """Make a regex pattern for callback data with cad number and type of callback (prefix) in int"""
     return '^' + str(int(n)) + r'(\d+:)+\d+$'
 
 
-def make_rus_regex(name):
-    return ''.join(('^', '(', name[0].lower(), '|'))
-
-
-def make_handler(callback, name, pass_user_data=False):
-    english_handler = CommandHandler(name.eng, callback, pass_user_data=pass_user_data)
-    russian_handler = RegexHandler(re.compile('^' + name.rus + '$', flags=re.IGNORECASE),
-                                   callback, pass_user_data=pass_user_data)
-    return [english_handler, russian_handler]
+def make_handler(callback, name):
+    russian_handler = MessageHandler(Filters.regex(re.compile('^' + name.rus, flags=re.IGNORECASE)), callback)
+    return russian_handler
 
 
 def main():
+    pp = PicklePersistence(filename='fobot_persistance.persistance')
+
     if 'proxy' in sys.argv:
         logger.info(f'Starting in PROXY mode. Proxy URL: {REQUEST_KWARGS["proxy_url"]}')
-        updater = Updater(token=BOT_TOKEN, request_kwargs=REQUEST_KWARGS)
+        request_kwargs=REQUEST_KWARGS
     else:
         logger.info('Starting in NORMAL mode')
-        updater = Updater(token=BOT_TOKEN)
+        request_kwargs = None
+
+    updater = Updater(
+        token=BOT_TOKEN,
+        request_kwargs=request_kwargs,
+        persistence=pp,
+        use_context=True,
+    )
+
+    admin_control = AdminControl((OVERSEER,), ADMIN, user_access)
+    valuer_control = ValuerControl((OVERSEER, ADMIN), VALUER, user_access)
 
     dp = updater.dispatcher
 
     conv_handler = ConversationHandler(
-        entry_points=make_handler(start, ActionName.start),
+        entry_points=[
+            CommandHandler('start', start)
+        ],
 
         states={
-            ASK_PHONE: [*make_handler(started.choose_auth, ActionName.auth,
-                                      pass_user_data=True),
-                        *make_handler(started.choose_register, ActionName.register,
-                                      pass_user_data=True),
-                        ],
-            FETCH_PHONE: [MessageHandler(Filters.contact,
-                                         started.fetch_number_from_contact,
-                                         pass_user_data=True)
-                          ],
-            REGISTER: [MessageHandler(Filters.text,
-                                      register.register,
-                                      pass_user_data=True)
-                       ],
+            FETCH_PHONE: [
+                MessageHandler(Filters.contact, fetch_number_from_contact),
+            ],
+            REGISTER: [
+                MessageHandler(Filters.text, register),
+            ],
+            MAIN: [
+                make_handler(search_reestr, ActionName.search),
+                make_handler(choose_auth, ActionName.auth),
+                make_handler(choose_register, ActionName.register),
+                make_handler(show_balance, ActionName.show_balance),
+                make_handler(start_recharging, ActionName.recharge),
 
-            CABINET: [RegexHandler(re.compile(ActionName.search.rus, flags=re.IGNORECASE),
-                                   cabinet.search_text,
-                                   pass_user_data=True),
-                      CommandHandler(ActionName.search.eng,
-                                     cabinet.search_command,
-                                     pass_user_data=True,
-                                     pass_args=True),
+                CallbackQueryHandler(read_more_button, pattern=cad_pattern(CallbackPrefix.FULL_DATA)),
+                CallbackQueryHandler(ask_order_type, pattern=cad_pattern(CallbackPrefix.ORDER_TYPE)),
+                CallbackQueryHandler(order_doc, pattern=f'^{CallbackPrefix.DOC_TYPE}\d+$'),
 
-                      CallbackQueryHandler(cabinet.read_more_button,
-                                           pattern=cad_pattern(Prefix.FULL_DATA)),
+                CommandHandler('list_admins', admin_control.list),
+                CommandHandler('list_valuers', valuer_control.list),
+                CommandHandler('add_admin', admin_control.add),
+                CommandHandler('add_valuer', valuer_control.add),
+                CommandHandler('remove_admin', admin_control.remove),
+                CommandHandler('remove_valuer', valuer_control.remove),
 
-                      CallbackQueryHandler(cabinet.ask_order_type,
-                                           pattern=cad_pattern(Prefix.ORDER_TYPE),
-                                           pass_user_data=True),
-                      ],
-            ORDER: [CallbackQueryHandler(order.order_doc,
-                                         pattern=r'^\d+$',
-                                         pass_user_data=True),
-                    ],
+                MessageHandler(Filters.contact, set_contact),
+            ],
+            RECHARGE: [
+                MessageHandler(Filters.text, recharge)
+            ],
         },
-        fallbacks=[*make_handler(cancel, ActionName.cancel,
-                                 pass_user_data=True),
-
-                   *make_handler(end, ActionName.end,
-                                 pass_user_data=True),
-
-                   *make_handler(show_help, ActionName.show_help,
-                                 pass_user_data=True),
-
-                   *make_handler(display_balance, ActionName.show_balance,
-                                 pass_user_data=True),
-
-                   CommandHandler('admin_help', admin.show_admin_help)
-                   ]
+        fallbacks=[
+            make_handler(cancel, ActionName.cancel),
+            make_handler(end, ActionName.end),
+            make_handler(show_help, ActionName.show_help),
+        ],
+        #per_message=True,
+        name='fobot_conversation',
+        persistent=True,
     )
     dp.add_handler(conv_handler)
+
+    user_access_controllers = [
+    ]
+    for handler in user_access_controllers:
+        dp.add_handler(handler)
 
     # log all errors
     dp.add_error_handler(handle_error)
 
-    try:
-        dp.user_data = load_user_data()
-        conv_handler.conversations = load_conversations()
-    except FileNotFoundError:
-        logger.warning('user_data or conversations dump file not found')
+    if 'debug-start' in sys.argv:
+        conv_handler.conversations[(182705944, 182705944)] = None
+        dp.user_data[182705944] = {}
+    elif 'debug-huh' in sys.argv:
+        conv_handler.conversations[(182705944, 182705944)] = 3
+        dp.user_data[182705944] = {'phone': '+79263793151', 'logged': True, 'orders': []}
 
-    if __debug__:
-        a = 2
-        if a == 1:
-            conv_handler.conversations[(182705944, 182705944)] = None
-        elif a == 2:
-            conv_handler.conversations[(182705944, 182705944)] = 3
-            dp.user_data[182705944] = {'phone': '9263793151', 'logged': True, 'orders': []}
-
+    logger.info('Starting the bot...')
     # Start the Bot
     updater.start_polling()
 
     updater.idle()
 
-    save_conversations(conv_handler.conversations)
-    save_user_data(dp.user_data)
+    user_access.close()
+    logger.info('The bot has stopped.')
 
 
 if __name__ == '__main__':

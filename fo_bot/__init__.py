@@ -1,25 +1,18 @@
-import logging
-import sys
-
 import googlemaps
+import shelve
 
-from . import bot_utils, egrn_api
-from .restricted import restricted
-from .text import ActionName
-from .settings import *
+import fo_bot.egrn_api
+from fo_bot.api import API
+from fo_bot.settings import *
+from fo_bot.pickle_helpers import load_pickle_default
+from fo_bot.access import User
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO,
-                    handlers= [logging.StreamHandler(sys.stdout),
-                               logging.FileHandler('bot_log'),
-                               ],
-                    )
-logger = logging.getLogger(__name__)
-
-api = bot_utils.API(API_TOKEN)
+api = API(API_TOKEN)
 rosreest_api = egrn_api.API(ROSREEST_API_TOKEN)
 gmaps_api = googlemaps.Client(key=GMAPS_API_TOKEN)
+user_access = shelve.open(USER_ACCESS_FILENAME)
+for phone in OVERSEERS_PHONES:
+    user_access[phone] = User(access_level=OVERSEER, name='', phone=phone)
 
 
-__all__ = ['settings', 'bot_states', 'bot_utils', 'logger',
-           'restricted', 'ActionName']
+__all__ = ['api', 'rosreest_api', 'gmaps_api', 'user_access']
