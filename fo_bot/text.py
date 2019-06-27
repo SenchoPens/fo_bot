@@ -20,3 +20,4 @@ class ActionName:
     change_cost = Name(rus='Изменить стоимость выписки', eng='change_cost')
     recharge = Name(rus='Пополнить', eng='recharge')
     search = Name(rus='Искать', eng='search')
+    count_saving = Name(rus='Налог', eng='count')

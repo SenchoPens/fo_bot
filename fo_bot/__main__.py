@@ -13,7 +13,12 @@ from telegram.ext import (
     PicklePersistence,
 )
 
-from fo_bot import user_access
+from fo_bot import (
+    user_access,
+    shelve_db,
+    chat_ids,
+    saving_orders,
+)
 from fo_bot.logger import logger
 from fo_bot.settings import *
 from fo_bot.api import APIMethodException
@@ -33,6 +38,14 @@ from fo_bot.cabinet import (
     choose_register,
     fetch_number_from_contact,
     register,
+)
+from fo_bot.savings import (
+    count_saving,
+    input_value,
+    propose_saving,
+    set_value,
+    send_final_result,
+    get_valuers_results,
 )
 
 # Enable logging
@@ -72,6 +85,7 @@ def show_help(update, context):
         f'\nНапишите {ActionName.end.get_pretty()}, чтобы прекратить наш диалог.'
     )
     phone = context.user_data['phone']
+    logger.info(f'{phone}\n{user_access}')
     if phone not in user_access:
         return
 
@@ -180,10 +194,15 @@ def main():
                 make_handler(choose_register, ActionName.register),
                 make_handler(show_balance, ActionName.show_balance),
                 make_handler(start_recharging, ActionName.recharge),
+                make_handler(propose_saving, ActionName.count_saving),
 
                 CallbackQueryHandler(read_more_button, pattern=cad_pattern(CallbackPrefix.FULL_DATA)),
                 CallbackQueryHandler(ask_order_type, pattern=cad_pattern(CallbackPrefix.ORDER_TYPE)),
                 CallbackQueryHandler(order_doc, pattern=f'^{CallbackPrefix.DOC_TYPE}\d+$'),
+                CallbackQueryHandler(count_saving, pattern=cad_pattern(CallbackPrefix.COUNT_SAVINGS)),
+                CallbackQueryHandler(input_value, pattern=cad_pattern(CallbackPrefix.SET_VALUE)),
+                CallbackQueryHandler(get_valuers_results, pattern=cad_pattern(CallbackPrefix.GET_VALUERS_RESULTS)),
+                CallbackQueryHandler(send_final_result, pattern=cad_pattern(CallbackPrefix.SEND_FINAL_RESULT)),
 
                 CommandHandler('list_admins', admin_control.list),
                 CommandHandler('list_valuers', valuer_control.list),
@@ -193,6 +212,9 @@ def main():
                 CommandHandler('remove_valuer', valuer_control.remove),
 
                 MessageHandler(Filters.contact, set_contact),
+            ],
+            SET_VALUE: [
+                MessageHandler(Filters.text, set_value),
             ],
             RECHARGE: [
                 MessageHandler(Filters.text, recharge)
@@ -224,7 +246,13 @@ def main():
 
     updater.idle()
 
-    user_access.close()
+    """
+    shelve_db['user_access'] = user_access
+    shelve_db['chat_ids'] = chat_ids
+    shelve_db['saving_orders'] = saving_orders
+    """
+    shelve_db.close()
+
     logger.info('The bot has stopped.')
 
 

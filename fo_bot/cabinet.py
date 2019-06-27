@@ -5,6 +5,7 @@ from telegram import (
     ReplyKeyboardMarkup,
 )
 
+from fo_bot import chat_ids
 from fo_bot.text import ActionName
 from fo_bot.logger import logger
 from fo_bot.settings import *
@@ -51,6 +52,8 @@ def fetch_number_from_contact(update, context):
     logger.info(f'User {update.effective_user.name} send a contact with phone number {phone}')
 
     context.user_data['phone'] = phone
+    chat_ids[phone] = update.effective_message.chat_id
+    logger.info(f'chat ids: {chat_ids}')
     return context.user_data['chosen'](update, context)
 
 

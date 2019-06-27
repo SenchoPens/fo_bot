@@ -7,18 +7,23 @@ from enum import IntEnum, auto
 BOT_TOKEN = os.environ['BOT_TOKEN']
 MAX_DATA_LEN = 64
 
-END, FETCH_PHONE, REGISTER, MAIN, ORDER, RECHARGE = range(-1, 5)
+END, FETCH_PHONE, REGISTER, MAIN, ORDER, SET_VALUE, RECHARGE = range(-1, 6)
 
 OVERSEERS_PHONES = os.environ['OVERSEERS_PHONES'].split(':')
 
-VALUER, ADMIN, OVERSEER = range(3)
-USER_ACCESS_FILENAME = 'user_access.shelve'
+#VALUER, ADMIN, OVERSEER = range(3)
+VALUER, ADMIN, OVERSEER = 1, 1, 1
+SHELVE_FILENAME = 'db.shelve'
 
 
 class CallbackPrefix(IntEnum):
     FULL_DATA = auto()
     ORDER_TYPE = auto()
     DOC_TYPE = auto()
+    COUNT_SAVINGS = auto()
+    GET_VALUERS_RESULTS = auto()
+    SET_VALUE = auto()
+    SEND_FINAL_RESULT = auto()
 
 
 API_TOKEN = os.environ['API_TOKEN']

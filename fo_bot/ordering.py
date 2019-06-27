@@ -1,5 +1,3 @@
-from functools import wraps
-
 import googlemaps as gmaps
 from telegram import (
     InlineKeyboardButton,
@@ -9,18 +7,13 @@ from telegram import (
 
 from fo_bot.logger import logger
 from fo_bot.settings import *
-from fo_bot import api, gmaps_api, rosreest_api
+from fo_bot import api, gmaps_api
 from fo_bot.cabinet import logged_only
 from fo_bot.text import ActionName
-import fo_bot.egrn_api as egrn_api
-
-
-def callbackquery_message_to_message(f):
-    @wraps(f)
-    def wrap(update, context):
-        update.message = update.callback_query.message
-        return f(update, context)
-    return wrap
+from fo_bot.decorators import (
+    remove_prefix,
+    callbackquery_message_to_message,
+)
 
 
 @logged_only
@@ -29,22 +22,10 @@ def show_balance(update, context):
     update.message.reply_text(f'Ваш баланс: {balance} рублей.')
 
 
-def remove_prefix(f):
-    """
-    A decorator around callbacks that handle CallbackButton's clicks with cad number in callback data.
-    It removes callback type (prefix) from callback data.
-    """
-    @wraps(f)
-    def wrapper(update, context):
-        update.callback_query.data = update.callback_query.data[1:]
-        return f(update, context)
-    return wrapper
-
-
 @remove_prefix
 @callbackquery_message_to_message
 def read_more_button(update, context):
-    return read_more_egrn(update, context, cadnumber=update.callback_query.data)
+    return read_more(update, context, cadnumber=update.callback_query.data)
 
 
 @remove_prefix
@@ -140,50 +121,45 @@ def read_more(update, context, *, cadnumber):
     context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
 
     info = api.info(code=cadnumber)
-    address = info['address']
+    address = info['object']['ADDRESS']
 
     try:
         show_map(update, context, address=address)
     except (gmaps.exceptions.ApiError, gmaps.exceptions.TransportError, gmaps.exceptions.Timeout) as e:
         logger.warning(f'Gmaps API error: {e}')
 
-    update.effective_message.reply_text(
-        text='\n'.join(': '.join(args) for args in info.items()),
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(
-                text='Заказать выписку',
-                callback_data=f'{int(CallbackPrefix.ORDER_TYPE)}{cadnumber}'
-            )]]
+    text = '\n'.join(f'*{key}*: {value}' for key, value in info['details'].items())
+    markup = \
+        [[InlineKeyboardButton(
+            text='Заказать выписку',
+            callback_data=f'{int(CallbackPrefix.ORDER_TYPE)}{cadnumber}'
+        )]]
+    tax = count_tax(info['object']['CADNOMER'], info)
+    if tax:
+        text = text + f'\n\n*Налог на эту недвижимость*:{tax}'
+        markup.append(
+            [InlineKeyboardButton(
+                text='На сколько можно понизить налог на эту недвижимость?',
+                callback_data=f'{int(CallbackPrefix.COUNT_SAVINGS)}{cadnumber}'
+            )]
         )
+    update.effective_message.reply_text(
+        text=text,
+        reply_markup=markup,
+        parse_mode='markdown',
     )
     return MAIN
 
 
-@callbackquery_message_to_message
-@egrn_api.api_error_handler(MAIN)
-def read_more_egrn(update, context, *, cadnumber):
-    logger.info(f'User {update.effective_user.name} requested info on cadnumber {cadnumber}')
+def count_tax(query, info=None):
+    if info is None:
+        info = api.info(code=query)
 
-    context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
-
-    info = rosreest_api.get_object_full_info(cadnumber)
-    address = info.egrn.property_object.address
-
-    try:
-        show_map(update, context, address=address)
-    except (gmaps.exceptions.ApiError, gmaps.exceptions.TransportError, gmaps.exceptions.Timeout) as e:
-        logger.warning(f'Gmaps API error: {e}')
-
-    update.effective_message.reply_text(
-        text='\n'.join(': '.join((k, str(v))) for (k, v) in info.egrn.details.items()),
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(
-                text='Заказать выписку',
-                callback_data=f'{int(CallbackPrefix.ORDER_TYPE)}{cadnumber}' )
-            ]]
-        )
-    )
-    return MAIN
+    cost_field_name = 'Кадастровая стоимость'
+    if cost_field_name in info['details']:
+        cost = int(info['details'][cost_field_name])
+        return round(cost * 1.6 + cost * 1.7, 2)
+    return ''
 
 
 def search_reestr(update, context):
@@ -203,7 +179,7 @@ def search_reestr(update, context):
     update.message.reply_text('Вот что я нашел:')
     if len(res) == 1:
         found = res[0]
-        return read_more_egrn(update, context, cadnumber=found['number'])
+        return read_more(update, context, cadnumber=found['number'])
 
     for found in res[:5]:
         update.message.reply_text(

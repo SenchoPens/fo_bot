@@ -75,7 +75,6 @@ class UserControl:
         logger.info(f'User {context.user_data["phone"]} added {phone} to {type(self).__name__}.')
 
 
-
 class AdminControl(UserControl):
     pass
 
