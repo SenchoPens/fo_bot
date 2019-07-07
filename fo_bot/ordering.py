@@ -129,7 +129,7 @@ def read_more(update, context, *, cadnumber):
         logger.warning(f'Gmaps API error: {e}')
 
     text = '\n'.join(f'*{key}*: {value}' for key, value in info['details'].items())
-    markup = \
+    keyboard = \
         [[InlineKeyboardButton(
             text='Заказать выписку',
             callback_data=f'{int(CallbackPrefix.ORDER_TYPE)}{cadnumber}'
@@ -137,7 +137,7 @@ def read_more(update, context, *, cadnumber):
     tax = count_tax(info['object']['CADNOMER'], info)
     if tax:
         text = text + f'\n\n*Налог на эту недвижимость*:{tax}'
-        markup.append(
+        keyboard.append(
             [InlineKeyboardButton(
                 text='На сколько можно понизить налог на эту недвижимость?',
                 callback_data=f'{int(CallbackPrefix.COUNT_SAVINGS)}{cadnumber}'
@@ -145,7 +145,7 @@ def read_more(update, context, *, cadnumber):
         )
     update.effective_message.reply_text(
         text=text,
-        reply_markup=markup,
+        reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='markdown',
     )
     return MAIN
