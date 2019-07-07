@@ -1,10 +1,21 @@
-import googlemaps
 import shelve
+from dataclasses import dataclass
+
+import googlemaps
 
 from fo_bot.api import API
 from fo_bot.settings import *
 from fo_bot.pickle_helpers import load_pickle_default
 from fo_bot.access import User
+
+
+@dataclass()
+class SavingOrder:
+    user: str
+    cadnumber: str
+    valuer_results: dict
+    is_finished: bool
+
 
 api = API(API_TOKEN)
 gmaps_api = googlemaps.Client(key=GMAPS_API_TOKEN, timeout=10, retry_timeout=7)

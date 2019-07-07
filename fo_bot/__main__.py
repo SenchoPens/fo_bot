@@ -246,11 +246,6 @@ def main():
 
     updater.idle()
 
-    """
-    shelve_db['user_access'] = user_access
-    shelve_db['chat_ids'] = chat_ids
-    shelve_db['saving_orders'] = saving_orders
-    """
     shelve_db.close()
 
     logger.info('The bot has stopped.')

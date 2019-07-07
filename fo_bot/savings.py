@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -10,6 +8,7 @@ from fo_bot import (
     user_access,
     saving_orders,
     chat_ids,
+    SavingOrder,
 )
 from fo_bot.settings import (
     CallbackPrefix,
@@ -27,14 +26,6 @@ from fo_bot.decorators import (
     callbackquery_message_to_message,
 )
 from fo_bot.logger import logger
-
-
-@dataclass()
-class SavingOrder:
-    user: str
-    cadnumber: str
-    valuer_results: dict
-    is_finished: bool
 
 
 def propose_saving(update, context):
