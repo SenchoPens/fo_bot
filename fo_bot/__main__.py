@@ -123,7 +123,7 @@ def set_contact(update, context):
     contact = update.message.contact
     phone = contact.phone_number
     context.user_data['contact'] = phone
-    context.user_data['contact_name'] = contact.first_name + ('' if contact.last_name is None else contact.last_name)
+    context.user_data['contact_name'] = contact.first_name + ('' if contact.last_name is None else ' ' + contact.last_name)
     logger.info(f'Recieved contact {phone} from user {update.effective_user.id} with phone {context.user_data["phone"]}')
     return
 
@@ -176,7 +176,7 @@ def main():
 
     if 'proxy' in sys.argv:
         logger.info(f'Starting in PROXY mode. Proxy URL: {REQUEST_KWARGS["proxy_url"]}')
-        request_kwargs=REQUEST_KWARGS
+        request_kwargs = REQUEST_KWARGS
     else:
         logger.info('Starting in NORMAL mode')
         request_kwargs = None

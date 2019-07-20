@@ -11,8 +11,7 @@ END, FETCH_PHONE, REGISTER, MAIN, ORDER, SET_VALUE, RECHARGE, RECEIVE_TEXT = ran
 
 OVERSEERS_PHONES = os.environ['OVERSEERS_PHONES'].split(':')
 
-#VALUER, ADMIN, OVERSEER = range(3)
-VALUER, ADMIN, OVERSEER = 1, 1, 1
+VALUER, ADMIN, OVERSEER = range(3)
 SHELVE_FILENAME = 'db.shelve'
 
 DOCX_TEMPLATE_FILENAME = 'template_fobot.docx'
@@ -29,8 +28,6 @@ class CallbackPrefix(IntEnum):
 
 API_TOKEN = os.environ['API_TOKEN']
 API_URL = 'https://findtheowner.ru/api'
-
-ROSREEST_API_TOKEN = os.environ['ROSREESTR_API_TOKEN']
 
 GMAPS_API_TOKEN = os.environ['GMAPS_API_TOKEN']
 

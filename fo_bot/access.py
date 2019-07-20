@@ -43,6 +43,7 @@ class UserControl:
 
     def list(self, update: Update, context: CallbackContext):
         objects = [user.name for user in self.user_access.values() if user.access_level == self.controlled_object]
+        logger.info(f'list: {objects}')
         if objects:
             update.message.reply_text('\n'.join(objects))
         else:
@@ -68,7 +69,7 @@ class UserControl:
         phone = context.user_data['contact']
         # Assume the bigger the number under privilege, the bigger access is granted
         self.user_access[phone] = User(
-            access_level=max(self.controlled_object, self.user_access.get(phone, -1)),
+            access_level=max(self.controlled_object, self.user_access.get(phone, UserControl._nobody).access_level),
             name=context.user_data['contact_name'],
             phone=phone,
         )

@@ -133,8 +133,10 @@ def send_final_result(update, context):
 
     order = saving_orders[query]
     if not order.valuer_results:
-        update.message.reply_text('Ни один оценщик не оценил стоимость недвижимости')
+        update.message.reply_text('Ни один оценщик не оценил стоимость недвижимости.')
         return
+    if order.is_finished:
+        update.message.reply_text('Заказ уже обработан.')
 
     context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
 
@@ -165,6 +167,8 @@ def send_final_result(update, context):
         caption=f'Экономия обьека {query} составила {res}%'
     )
     doc.close()
+
+    saving_orders[query].is_finished = True
 
 
 @remove_prefix
