@@ -7,3 +7,4 @@ Pipfile.lock
 *__pycache__
 *bot_log
 .env
+*.docx#

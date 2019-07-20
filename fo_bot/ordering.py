@@ -13,6 +13,7 @@ from fo_bot.text import ActionName
 from fo_bot.decorators import (
     remove_prefix,
     callbackquery_message_to_message,
+    need_input,
 )
 
 
@@ -24,6 +25,7 @@ def show_balance(update, context):
 
 @remove_prefix
 @callbackquery_message_to_message
+@logged_only
 def read_more_button(update, context):
     return read_more(update, context, cadnumber=update.callback_query.data)
 
@@ -39,7 +41,7 @@ def ask_order_type(update, context):
         keyboard.append([
             InlineKeyboardButton(
                 text=f'{service["name"]} ({service["price"]})',
-                callback_data=f'{CallbackPrefix.DOC_TYPE}{i}'
+                callback_data=f'{CallbackPrefix.DOC_TYPE}{i + 1}'
             )
         ])
     context.user_data['cadnomer'] = cadnomer
@@ -60,6 +62,7 @@ def order_doc(update, context):
 
     context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
 
+    logger.info(f'User {update.effective_user.name} is making an order {order_id}.')
     res = api.order(phone=context.user_data['phone'], number=context.user_data['cadnomer'],
                     service=order_id)
     if 'pay' in res:
@@ -115,20 +118,24 @@ def show_map(update, context, *, address):
     context.bot.send_location(chat_id=update.effective_user.id, latitude=lat, longitude=lng)
 
 
+def get_text_info(info):
+    return '\n'.join(f'*{key}*: {value}' for key, value in info['details'].items())
+
+
 def read_more(update, context, *, cadnumber):
     logger.info(f'User {update.effective_user.name} requested info on cadnumber {cadnumber}')
 
     context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
 
     info = api.info(code=cadnumber)
-    address = info['object']['ADDRESS']
+    text = get_text_info(info)
 
+    address = info['object']['ADDRESS']
     try:
         show_map(update, context, address=address)
     except (gmaps.exceptions.ApiError, gmaps.exceptions.TransportError, gmaps.exceptions.Timeout) as e:
         logger.warning(f'Gmaps API error: {e}')
 
-    text = '\n'.join(f'*{key}*: {value}' for key, value in info['details'].items())
     keyboard = \
         [[InlineKeyboardButton(
             text='Заказать выписку',
@@ -151,20 +158,35 @@ def read_more(update, context, *, cadnumber):
     return MAIN
 
 
+def get_cost_field(info):
+    cost_field_name = 'Кадастровая стоимость'
+    if cost_field_name in info['details']:
+        logger.info(info['details'])
+        cost = info['details'][cost_field_name]
+        if not isinstance(cost, float) and not isinstance(cost, int):
+            cost = float(cost.replace(',', '.'))
+
+        return cost
+    return None
+
+
+
 def count_tax(query, info=None):
     if info is None:
         info = api.info(code=query)
 
-    cost_field_name = 'Кадастровая стоимость'
-    if cost_field_name in info['details']:
-        cost = int(info['details'][cost_field_name])
-        return round(cost * 1.6 + cost * 1.7, 2)
+    cost = get_cost_field(info)
+    if cost is not None:
+        return round(cost * 0.016 + cost * 0.017, 2)
     return ''
 
 
+@need_input(
+    receive_state=RECEIVE_TEXT,
+    text='Введите адрес или кадастровый номер недвижимости:'
+)
 def search_reestr(update, context):
-    text = update.message.text
-    query = text[text.find(' ') + 1:]
+    query = context.user_data[need_input.stack_key].pop().text
 
     logger.info(f'User {update.effective_user.name} made a search query {query}')
 
@@ -177,9 +199,7 @@ def search_reestr(update, context):
         return MAIN
 
     update.message.reply_text('Вот что я нашел:')
-    if len(res) == 1:
-        found = res[0]
-        return read_more(update, context, cadnumber=found['number'])
+    context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
 
     for found in res[:5]:
         update.message.reply_text(
@@ -196,16 +216,14 @@ def search_reestr(update, context):
     return MAIN
 
 
+@need_input(
+    receive_state=RECEIVE_TEXT,
+    text='Введите одно целое число - количество рублей, на которое вы хотите пополнить свой баланс.',
+)
 @logged_only
-def start_recharging(update, context):
-    update.message.reply_text(
-        'Введите одно целое число - количество рублей, на которое вы хотите пополнить свой баланс.'
-    )
-    return RECHARGE
-
-
 def recharge(update, context):
-    amount = update.message.text[:10]
+    amount = context.user_data[need_input.stack_key].pop().text
+    logger.info(amount)
     try:
         amount = int(amount)
     except ValueError:

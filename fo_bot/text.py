@@ -16,7 +16,7 @@ class ActionName:
     cancel = Name(rus='Отменить', eng='cancel')
     show_help = Name(rus='Помощь', eng='help')
     auth = Name(rus='Авторизоваться', eng='auth')
-    register = Name(rus='Зарестистрироваться', eng='register')
+    register = Name(rus='Зарегистрироваться', eng='register')
     change_cost = Name(rus='Изменить стоимость выписки', eng='change_cost')
     recharge = Name(rus='Пополнить', eng='recharge')
     search = Name(rus='Искать', eng='search')

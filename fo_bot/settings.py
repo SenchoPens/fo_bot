@@ -7,7 +7,7 @@ from enum import IntEnum, auto
 BOT_TOKEN = os.environ['BOT_TOKEN']
 MAX_DATA_LEN = 64
 
-END, FETCH_PHONE, REGISTER, MAIN, ORDER, SET_VALUE, RECHARGE = range(-1, 6)
+END, FETCH_PHONE, REGISTER, MAIN, ORDER, SET_VALUE, RECHARGE, RECEIVE_TEXT = range(-1, 7)
 
 OVERSEERS_PHONES = os.environ['OVERSEERS_PHONES'].split(':')
 
@@ -15,6 +15,7 @@ OVERSEERS_PHONES = os.environ['OVERSEERS_PHONES'].split(':')
 VALUER, ADMIN, OVERSEER = 1, 1, 1
 SHELVE_FILENAME = 'db.shelve'
 
+DOCX_TEMPLATE_FILENAME = 'template_fobot.docx'
 
 class CallbackPrefix(IntEnum):
     FULL_DATA = auto()

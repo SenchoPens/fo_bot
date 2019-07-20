@@ -9,6 +9,7 @@ from fo_bot import (
     saving_orders,
     chat_ids,
     SavingOrder,
+    api,
 )
 from fo_bot.settings import (
     CallbackPrefix,
@@ -17,22 +18,30 @@ from fo_bot.settings import (
     VALUER,
     SET_VALUE,
     MAIN,
+    RECEIVE_TEXT,
 )
 from fo_bot.ordering import (
     count_tax,
+    get_text_info,
+    get_cost_field,
 )
 from fo_bot.decorators import (
     remove_prefix,
     callbackquery_message_to_message,
+    need_input,
 )
+from fo_bot.save_to_docx import save_to_docx
 from fo_bot.logger import logger
 
 
+@need_input(
+    receive_state=RECEIVE_TEXT,
+    text='Пожалуйста, введите кадастровый номер недвижимости, на которую вы хотите снизить налог:',
+)
 def propose_saving(update, context):
-    text = update.message.text
-    query = text[text.find(' ') + 1:]
-
-    tax = count_tax(query)
+    cadnumber = context.user_data[need_input.stack_key].pop().text
+    logger.info(f'User made saving query with cadnumber {cadnumber}')
+    tax = count_tax(cadnumber)
 
     if not tax:
         update.message.reply_text(
@@ -40,14 +49,15 @@ def propose_saving(update, context):
         )
         return
     update.message.reply_text(
-        text=f'Текущий налог на недвижимость с кадастровым номером {query}:\n{tax}',
+        text=f'Текущий налог на недвижимость с кадастровым номером {cadnumber}:\n{tax}',
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton(
                 text='Рассчитать экономию',
-                callback_data=f'{int(CallbackPrefix.COUNT_SAVINGS)}{query}',
+                callback_data=f'{int(CallbackPrefix.COUNT_SAVINGS)}{cadnumber}',
             ),
         ]]),
     )
+    return MAIN
 
 
 def put_admin_task(update, context, *, query):
@@ -125,11 +135,36 @@ def send_final_result(update, context):
     if not order.valuer_results:
         update.message.reply_text('Ни один оценщик не оценил стоимость недвижимости')
         return
-    res = min(int(x.rstrip('%')) for x in order.valuer_results.values())
-    context.bot.send_message(
-        chat_id=chat_ids[order.user],
-        text=f'Экономия обьека {query} составила {res}%'
+
+    context.bot.send_chat_action(update.effective_chat.id, action=ChatAction.TYPING)
+
+    info = api.info(code=query)
+    info_text = get_text_info(info)
+
+    val_results_list = list(x.rstrip('%') for x in order.valuer_results.values())
+    val_results_list.append(val_results_list[0])
+    p1, p2, *_ = val_results_list
+    res = min(int(p1), int(p2))
+
+    realty_cost = get_cost_field(info)
+    economy = round((realty_cost - realty_cost * res / 100) * (0.016 + 0.017), 2)
+
+    doc = save_to_docx(
+        info=info_text.replace('*', ''),
+        p1=p1,
+        p2=p2,
+        p3=str(economy),
     )
+    with open('demo.docx', 'wb') as f:
+        f.write(doc.getvalue())
+    doc.seek(0)
+    context.bot.send_document(
+        document=doc,
+        filename='Экономия.docx',
+        chat_id=chat_ids[order.user],
+        caption=f'Экономия обьека {query} составила {res}%'
+    )
+    doc.close()
 
 
 @remove_prefix
@@ -159,7 +194,7 @@ def input_value(update, context):
     if saving_orders[query].is_finished:
         update.message.reply_text('Заказ уже обработан.')
         return
-    update.message.reply_text('Введите вашу оценку, или введите /cancel:')
+    update.message.reply_text('Введите вашу оценку:')
     context.user_data['set_value_order'] = query
     return SET_VALUE
 

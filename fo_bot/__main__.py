@@ -3,6 +3,10 @@
 import re
 import sys
 
+from telegram import (
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+)
 from telegram.ext import (
     Updater,
     CommandHandler,
@@ -16,13 +20,12 @@ from telegram.ext import (
 from fo_bot import (
     user_access,
     shelve_db,
-    chat_ids,
-    saving_orders,
 )
 from fo_bot.logger import logger
 from fo_bot.settings import *
 from fo_bot.api import APIMethodException
 from fo_bot.access import AdminControl, ValuerControl
+from fo_bot.decorators import need_input
 from fo_bot.text import ActionName
 from fo_bot.ordering import (
     search_reestr,
@@ -30,14 +33,13 @@ from fo_bot.ordering import (
     ask_order_type,
     order_doc,
     recharge,
-    start_recharging,
     show_balance,
 )
 from fo_bot.cabinet import (
     choose_auth,
     choose_register,
     fetch_number_from_contact,
-    register,
+    enter_cabinet,
 )
 from fo_bot.savings import (
     count_saving,
@@ -50,6 +52,14 @@ from fo_bot.savings import (
 
 # Enable logging
 logger.info('-' * 50)
+
+command_markup = ReplyKeyboardMarkup([[KeyboardButton(x.rus)] for x in (
+    ActionName.show_balance,
+    ActionName.show_help,
+    ActionName.search,
+    ActionName.count_saving,
+    ActionName.recharge,
+)])
 
 
 """ Entry points """
@@ -65,6 +75,7 @@ def start(update, context):
         f'Здравствуйте, {user.first_name}.\n'
     )
     show_help(update, context)
+    enter_cabinet(update, context)
     return MAIN
 
 
@@ -82,7 +93,8 @@ def show_help(update, context):
         f'findtheowner.ru.'
         f'\nНапишите {ActionName.recharge.get_pretty()}, чтобы пополнить свой баланс.'
         f'\nНапишите {ActionName.cancel.get_pretty()}, чтобы отменить процедуру заказа выписки.'
-        f'\nНапишите {ActionName.end.get_pretty()}, чтобы прекратить наш диалог.'
+        f'\nНапишите {ActionName.end.get_pretty()}, чтобы прекратить наш диалог.',
+        reply_markup=command_markup,
     )
     phone = context.user_data['phone']
     logger.info(f'{phone}\n{user_access}')
@@ -119,6 +131,8 @@ def set_contact(update, context):
 def handle_error(update, context):
     """ Error handler """
     logger.warning(f'Update "{update}" caused error "{context.error}"')
+    if update is None:
+        return MAIN
     try:
         raise context.error
     except APIMethodException as e:
@@ -127,8 +141,11 @@ def handle_error(update, context):
             update.effective_message.reply_text(e.text)
         else:
             err = 'Something bad'
-            update.effective_message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
         logger.warning(f'API error: "{err}" with api request by {update.effective_user.name}')
+    except Exception as e:
+        logger.warning(f'Error: {e}')
+    update.effective_message.reply_text('Извините, произошла какая-то ошибка. Попробуйте позже.')
+    return MAIN
 
 
 def cancel(update, context):
@@ -185,16 +202,13 @@ def main():
             FETCH_PHONE: [
                 MessageHandler(Filters.contact, fetch_number_from_contact),
             ],
-            REGISTER: [
-                MessageHandler(Filters.text, register),
-            ],
             MAIN: [
-                make_handler(search_reestr, ActionName.search),
                 make_handler(choose_auth, ActionName.auth),
                 make_handler(choose_register, ActionName.register),
                 make_handler(show_balance, ActionName.show_balance),
-                make_handler(start_recharging, ActionName.recharge),
-                make_handler(propose_saving, ActionName.count_saving),
+                make_handler(search_reestr.demand_input, ActionName.search),
+                make_handler(recharge.demand_input, ActionName.recharge),
+                make_handler(propose_saving.demand_input, ActionName.count_saving),
 
                 CallbackQueryHandler(read_more_button, pattern=cad_pattern(CallbackPrefix.FULL_DATA)),
                 CallbackQueryHandler(ask_order_type, pattern=cad_pattern(CallbackPrefix.ORDER_TYPE)),
@@ -216,9 +230,9 @@ def main():
             SET_VALUE: [
                 MessageHandler(Filters.text, set_value),
             ],
-            RECHARGE: [
-                MessageHandler(Filters.text, recharge)
-            ],
+            RECEIVE_TEXT: [
+                MessageHandler(Filters.text, need_input.receive)
+            ]
         },
         fallbacks=[
             make_handler(cancel, ActionName.cancel),
